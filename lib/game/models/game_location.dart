@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'activity_definition.dart';
 import 'game_positions.dart';
 
-enum GameLocation { home, bath, outdoors }
+enum GameLocation { home, kitchen, bath, outdoors }
 
 /// Everything that differs between locations, as data.
 class LocationConfig {
@@ -14,6 +14,7 @@ class LocationConfig {
     required this.idlePositions,
     required this.walkArea,
     required this.activities,
+    this.flourish = const WanderStep.lick(),
   });
 
   final GameLocation location;
@@ -29,6 +30,10 @@ class LocationConfig {
   final Rect walkArea;
   final List<ActivityDefinition> activities;
 
+  /// The little idle habit the kitten shows between walks (e.g. sniffing in
+  /// the kitchen).
+  final WanderStep flourish;
+
   Offset get startPosition => idlePositions[1];
   Offset get returnPosition => idlePositions[1];
 
@@ -42,7 +47,7 @@ class LocationConfig {
         const WanderStep.pause(1.4),
         WanderStep.walk(idlePositions[2]),
         const WanderStep.pause(2.0),
-        const WanderStep.lick(),
+        flourish,
         WanderStep.walk(idlePositions[1]),
       ];
 }
@@ -62,6 +67,24 @@ abstract final class Locations {
       ActivityDefinition(CatActivity.feed, 'Feed', 'Feed the cat'),
       ActivityDefinition(CatActivity.play, 'Play', 'Play with the cat'),
       ActivityDefinition(CatActivity.catchMouse, 'Catch Mice', 'Catch mice'),
+    ],
+  );
+
+  static const kitchen = LocationConfig(
+    location: GameLocation.kitchen,
+    title: 'Kitchen',
+    greeting: "What's cooking, Kitty?",
+    idlePositions: [
+      KitchenPositions.idlePositionA,
+      KitchenPositions.idlePositionB,
+      KitchenPositions.idlePositionC,
+    ],
+    walkArea: Rect.fromLTRB(0.28, 0.70, 0.62, 0.78),
+    flourish: WanderStep.sniff(1.6),
+    activities: [
+      ActivityDefinition(CatActivity.glassTrouble, 'Glass', 'Glass trouble', accent: 0xFFE4ECFB),
+      ActivityDefinition(CatActivity.treatTime, 'Treat', 'Treat time', accent: 0xFFFBD9D2),
+      ActivityDefinition(CatActivity.fishySurprise, 'Fish', 'Fishy surprise', accent: 0xFFFDE6C8),
     ],
   );
 
@@ -101,6 +124,7 @@ abstract final class Locations {
 
   static LocationConfig of(GameLocation location) => switch (location) {
         GameLocation.home => home,
+        GameLocation.kitchen => kitchen,
         GameLocation.bath => bath,
         GameLocation.outdoors => outdoors,
       };

@@ -6,6 +6,7 @@ import '../models/game_positions.dart';
 import 'critters.dart';
 import 'food_bowl.dart';
 import 'grooming_props.dart';
+import 'kitchen_props.dart';
 import 'wool_ball.dart';
 
 /// Renders any [SpawnedObject] with the shared fade-out, at a size derived
@@ -31,6 +32,10 @@ class InteractiveObject extends StatelessWidget {
       ObjectKind.butterfly => box(GameSizes.butterfly, ButterflyPainter.aspect),
       ObjectKind.brush => box(GameSizes.brush, BrushPainter.aspect),
       ObjectKind.towel => box(GameSizes.towel, TowelPainter.aspect),
+      ObjectKind.glass => box(GameSizes.glass, GlassPainter.aspect),
+      ObjectKind.treat => box(GameSizes.treat, TreatPainter.aspect),
+      ObjectKind.fish => box(GameSizes.fish, FishPainter.aspect),
+      ObjectKind.plate => box(GameSizes.plate, PlatePainter.aspect),
     };
   }
 
@@ -50,6 +55,10 @@ class InteractiveObject extends StatelessWidget {
       ObjectKind.butterfly => ButterflyPainter(phase: o.phase, appear: o.appear, pop: o.pop),
       ObjectKind.brush => BrushPainter(facing: o.facing, appear: o.appear, pop: o.pop),
       ObjectKind.towel => TowelPainter(appear: o.appear, pop: o.pop),
+      ObjectKind.glass => GlassPainter(rotation: o.rotation, appear: o.appear, pop: o.pop),
+      ObjectKind.treat => TreatPainter(fill: o.fill, appear: o.appear, pop: o.pop),
+      ObjectKind.fish => FishPainter(progress: o.progress, appear: o.appear, pop: o.pop),
+      ObjectKind.plate => PlatePainter(fill: o.fill, appear: o.appear, pop: o.pop),
     };
     return Opacity(
       opacity: ObjectAnimations.popOpacity(o.pop),

@@ -5,6 +5,7 @@ import '../sketch/sketch.dart';
 import 'critters.dart';
 import 'food_bowl.dart';
 import 'grooming_props.dart';
+import 'kitchen_props.dart';
 import 'wool_ball.dart';
 
 /// Action-button icons, reusing the in-game sprites at rest so buttons and
@@ -26,6 +27,9 @@ class ActivityIcon extends StatelessWidget {
       CatActivity.catchBird => (BirdPainter.aspect, BirdPainter()),
       CatActivity.climbTree => (1.0, TreeIconPainter()),
       CatActivity.chaseButterflies => (ButterflyPainter.aspect, ButterflyPainter()),
+      CatActivity.glassTrouble => (GlassPainter.aspect * 1.3, GlassPainter(motionMarks: true)),
+      CatActivity.treatTime => (TreatPainter.aspect, TreatPainter()),
+      CatActivity.fishySurprise => (1.0, PanIconPainter()),
     };
     return AspectRatio(aspectRatio: aspect, child: CustomPaint(painter: painter));
   }

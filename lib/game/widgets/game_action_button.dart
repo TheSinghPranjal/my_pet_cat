@@ -130,8 +130,11 @@ class GameActionButton extends StatelessWidget {
     required this.onPressed,
     required this.semanticLabel,
     this.enabled = true,
+    this.accent,
   });
 
+  /// Paper tint behind the icon (defaults to white).
+  final Color? accent;
   final Widget icon;
   final String label;
   final VoidCallback onPressed;
@@ -145,7 +148,7 @@ class GameActionButton extends StatelessWidget {
       onPressed: onPressed,
       semanticLabel: semanticLabel,
       child: CustomPaint(
-        painter: const SketchFramePainter(radius: 0.3, emphasis: true),
+        painter: SketchFramePainter(radius: 0.3, emphasis: true, fill: accent ?? SketchColors.white),
         child: LayoutBuilder(
           builder: (context, box) => Padding(
             padding: EdgeInsets.fromLTRB(box.maxWidth * 0.1, box.maxHeight * 0.1,

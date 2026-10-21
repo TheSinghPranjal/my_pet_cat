@@ -6,6 +6,7 @@ import '../models/game_location.dart';
 import '../sketch/sketch.dart';
 import 'activity_icon.dart';
 import 'game_action_button.dart';
+import 'kitchen_props.dart';
 
 /// Persistent bottom bar for switching between Home, Bath and Garden.
 class LocationNavigation extends StatelessWidget {
@@ -105,6 +106,11 @@ class _NavIconPainter extends CustomPainter {
     switch (location) {
       case GameLocation.home:
         _house(pen);
+      case GameLocation.kitchen:
+        canvas.restore();
+        canvas.save();
+        canvas.translate(5, 5);
+        PanIconPainter(withFish: false, color: _ink).paint(canvas, const Size(30, 30));
       case GameLocation.bath:
         _tub(pen);
       case GameLocation.outdoors:

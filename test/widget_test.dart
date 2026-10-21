@@ -119,7 +119,7 @@ void main() {
     final c = await _launch(tester);
     expect(c.state, CatGameState.idle);
     expect(c.location, GameLocation.home);
-    for (final label in ['Feed the cat', 'Play with the cat', 'Catch mice', 'Go to Home', 'Go to Bath', 'Go to Outdoors']) {
+    for (final label in ['Feed the cat', 'Play with the cat', 'Catch mice', 'Go to Home', 'Go to Bath', 'Go to Outdoors', 'Go to Kitchen']) {
       expect(find.bySemanticsLabel(label), findsOneWidget, reason: label);
     }
   });
@@ -188,13 +188,78 @@ void main() {
 
   testWidgets('every activity in every location completes, twice, without drift', (tester) async {
     final c = await _launch(tester);
-    for (final location in [GameLocation.home, GameLocation.bath, GameLocation.outdoors]) {
+    for (final location in GameLocation.values) {
       if (location != c.location) await _goTo(tester, c, location);
       for (final def in Locations.of(location).activities) {
         await _runToEnd(tester, c, def.activity);
         await _runToEnd(tester, c, def.activity);
       }
     }
+  });
+
+  testWidgets('glass trouble: counter climb, fixed fall path, harmless puff', (tester) async {
+    final c = await _launch(tester);
+    await _goTo(tester, c, GameLocation.kitchen);
+    await tester.tap(find.bySemanticsLabel('Glass trouble'));
+    await tester.pump();
+    expect(c.state, CatGameState.glassTrouble);
+    final glass = c.objectOf(ObjectKind.glass)!;
+    expect(glass.position, KitchenPositions.glassSpawnPosition);
+    c.startActivity(CatActivity.glassTrouble); // Duplicate tap ignored.
+    expect(c.objects.where((o) => o.kind == ObjectKind.glass), hasLength(1));
+
+    await _pumpUntil(tester, () => c.state == CatGameState.glassInvestigating);
+    expect(c.catPosition, KitchenPositions.glassCounterIdlePosition);
+    await _pumpUntil(tester, () => c.state == CatGameState.glassReaction);
+    expect(glass.position, KitchenPositions.glassLandingPosition);
+    expect(c.effects.any((e) => e.kind == EffectKind.impact), isTrue);
+    await _pumpUntil(tester, () => c.pose == CatPose.innocent);
+    expect(c.objectOf(ObjectKind.glass), isNull);
+    await _pumpUntil(tester, () => c.state == CatGameState.idle);
+    expect(c.catPosition, KitchenPositions.glassCatReturnPosition);
+  });
+
+  testWidgets('treat time: scratch, cabinet opens, treat eaten, cabinet closes', (tester) async {
+    final c = await _launch(tester);
+    await _goTo(tester, c, GameLocation.kitchen);
+    c.startActivity(CatActivity.treatTime);
+    await _pumpUntil(tester, () => c.state == CatGameState.treatScratching);
+    await _pumpUntil(tester, () => c.pose == CatPose.scratch);
+    expect(c.catPosition, KitchenPositions.treatScratchPosition);
+    await _pumpUntil(tester, () => c.objectOf(ObjectKind.treat) != null);
+    expect(c.cabinetOpen, 1);
+    expect(c.objectOf(ObjectKind.treat)!.position, KitchenPositions.treatSpawnPosition);
+    await _pumpUntil(tester, () => c.state == CatGameState.treatEating && c.pose == CatPose.eat);
+    expect(c.catPosition, KitchenPositions.treatEatingPosition);
+    await _pumpUntil(tester, () => c.pose == CatPose.satisfied);
+    expect(c.objectOf(ObjectKind.treat), isNull);
+    await _pumpUntil(tester, () => c.state == CatGameState.idle);
+    expect(c.cabinetOpen, 0);
+  });
+
+  testWidgets('fishy surprise: cooks fully, served on a plate away from the stove', (tester) async {
+    final c = await _launch(tester);
+    await _goTo(tester, c, GameLocation.kitchen);
+    c.startActivity(CatActivity.fishySurprise);
+    await _pumpUntil(tester, () => c.state == CatGameState.fishCooking);
+    final fish = c.objectOf(ObjectKind.fish)!;
+    expect(fish.position, KitchenPositions.fishCookingPosition);
+    expect(fish.progress, lessThan(0.1));
+    expect(c.catPosition, KitchenPositions.fishCatWatchPosition);
+    await _pumpUntil(tester, () => c.state == CatGameState.fishServing);
+    expect(fish.progress, 1);
+    await _pumpUntil(tester, () => c.state == CatGameState.fishEating);
+    expect(c.objectOf(ObjectKind.fish), isNull);
+    final plate = c.objectOf(ObjectKind.plate)!;
+    expect(plate.position, KitchenPositions.fishServingPosition);
+    expect(plate.fill, 1);
+    await _pumpUntil(tester, () => c.pose == CatPose.eat);
+    expect(c.catPosition, KitchenPositions.fishCatEatingPosition);
+    // The kitten never stands at the stove.
+    expect(c.catPosition.dx, lessThan(KitchenPositions.stoveLeft));
+    await _pumpUntil(tester, () => c.state == CatGameState.idle, maxSeconds: 40);
+    expect(c.objects, isEmpty);
+    expect(c.catPosition, KitchenPositions.fishCatReturnPosition);
   });
 
   testWidgets('activities from another location are ignored', (tester) async {

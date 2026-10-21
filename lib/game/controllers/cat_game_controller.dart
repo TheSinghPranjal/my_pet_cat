@@ -16,6 +16,7 @@ import '../models/game_timings.dart';
 part 'home_activities.dart';
 part 'bath_activities.dart';
 part 'outdoor_activities.dart';
+part 'kitchen_activities.dart';
 
 double _sec(Duration d) => d.inMicroseconds / Duration.microsecondsPerSecond;
 
@@ -74,11 +75,14 @@ class CatGameController extends ChangeNotifier {
   double _swipe = 0;
   double _lift = 0;
   double _tubFoam = 0;
+  double _cabinetOpen = 0;
+  CatMark _mark = CatMark.none;
   CatPose _pose = CatPose.idle;
   late Offset _catPosition;
   double _facing = 1;
 
   CatActivity? _activity;
+  CatActivity? _lastCompleted;
 
   /// What the cat's eyes follow during an activity.
   SpawnedObject? _focus;
@@ -103,8 +107,14 @@ class CatGameController extends ChangeNotifier {
   /// The activity currently running, if any.
   CatActivity? get activeActivity => _activity;
 
+  /// The most recent activity that played through to the end.
+  CatActivity? get lastCompletedActivity => _lastCompleted;
+
   /// How much foam is in the bathtub (bath scene prop).
   double get tubFoam => _tubFoam;
+
+  /// How far the kitchen treat cabinet is open (0 = closed).
+  double get cabinetOpen => _cabinetOpen;
 
   List<SpawnedObject> get objects => UnmodifiableListView(_objects);
   List<SceneEffect> get effects => UnmodifiableListView(_effects);
@@ -128,6 +138,7 @@ class CatGameController extends ChangeNotifier {
         gazeY: _gazeY,
         swipe: _swipe,
         lift: _lift,
+        mark: _mark,
       );
 
   bool get wanderEnabled => _wanderEnabled;
@@ -154,6 +165,9 @@ class CatGameController extends ChangeNotifier {
       CatActivity.catchBird => (CatGameState.catchingBird, _catchBirdSequence),
       CatActivity.climbTree => (CatGameState.climbingTree, _climbTreeSequence),
       CatActivity.chaseButterflies => (CatGameState.chasingButterflies, _chaseButterfliesSequence),
+      CatActivity.glassTrouble => (CatGameState.glassTrouble, _glassTroubleSequence),
+      CatActivity.treatTime => (CatGameState.treatTime, _treatTimeSequence),
+      CatActivity.fishySurprise => (CatGameState.fishySurprise, _fishySurpriseSequence),
     };
     if (_beginInteraction(first, body)) _activity = activity;
   }
@@ -215,6 +229,7 @@ class CatGameController extends ChangeNotifier {
         // cat back on safe ground so it can never be stranded (e.g. in a tree).
         _clearTransient();
         if (!finished) _catPosition = locationConfig.startPosition;
+        if (finished && _activity != null) _lastCompleted = _activity;
         _activity = null;
         _setState(CatGameState.idle);
       }
@@ -237,6 +252,10 @@ class CatGameController extends ChangeNotifier {
         case WanderAction.lick:
           _setPose(CatPose.lick);
           ok = await _wait(_sec(GameTimings.lick));
+          if (ok) _setPose(CatPose.idle);
+        case WanderAction.sniff:
+          _setPose(CatPose.sniff);
+          ok = await _wait(step.seconds);
           if (ok) _setPose(CatPose.idle);
         case WanderAction.walk:
           ok = _wanderEnabled ? await _walkTo(step.target!) : await _wait(1.5);
@@ -466,6 +485,8 @@ class CatGameController extends ChangeNotifier {
     _swipe = 0;
     _lift = 0;
     _tubFoam = 0;
+    _cabinetOpen = 0;
+    _mark = CatMark.none;
     if (!_disposed) _sceneOpacity.value = 1;
     _setPose(CatPose.idle);
   }

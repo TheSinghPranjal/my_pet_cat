@@ -2,4 +2,10 @@
 <resources>
     <!-- Notebook paper, so the native launch screen blends into the Flutter splash. -->
     <color name="notebook_paper">#FCFBF6</color>
+    <color name="ic_launcher_background">#FCFBF6</color>
+    <!-- Home-screen widget pens. -->
+    <color name="widget_ink">#2236B5</color>
+    <color name="widget_ink_soft">#6E86DD</color>
+    <color name="widget_pencil">#26262B</color>
+    <color name="widget_coral_light">#FBD9D2</color>
 </resources>

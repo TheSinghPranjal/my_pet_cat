@@ -19,6 +19,20 @@ enum CatGameState {
   catchingBird,
   climbingTree,
   chasingButterflies,
+  glassTrouble,
+  glassClimbing,
+  glassInvestigating,
+  glassFalling,
+  glassReaction,
+  treatTime,
+  treatScratching,
+  treatRevealing,
+  treatEating,
+  fishySurprise,
+  fishSniffing,
+  fishCooking,
+  fishServing,
+  fishEating,
   returningToIdle,
   changingLocation,
 }
@@ -40,9 +54,14 @@ enum CatPose {
   climb,
   lookUp,
   swat,
+  scratch,
+  sniff,
+  satisfied,
+  innocent,
+  lookDown,
 }
 
-enum ObjectKind { bowl, yarn, mouse, bird, butterfly, brush, towel }
+enum ObjectKind { bowl, yarn, mouse, bird, butterfly, brush, towel, glass, treat, fish, plate }
 
 /// A temporary prop or critter in the scene.
 ///
@@ -61,8 +80,11 @@ class SpawnedObject {
   /// 1 = facing right, -1 = facing left.
   double facing;
 
-  /// How full the bowl is (bowl only).
+  /// How much food is left (bowl, treat, served plate).
   double fill = 1;
+
+  /// Generic 0..1 progress, e.g. how cooked the fish is.
+  double progress = 0;
 
   /// Seconds since spawn; drives idle loops like sniffing or flapping.
   double phase = 0;
@@ -80,7 +102,7 @@ class SpawnedObject {
   double get sortY => position.dy + layerBias;
 }
 
-enum EffectKind { bubbles, splash, sparkles, droplets, leaves, puff }
+enum EffectKind { bubbles, splash, sparkles, droplets, leaves, puff, aroma, steam, heat, scratches, impact, hearts, timer }
 
 /// A lightweight sketch effect anchored at a normalized position. Its look is
 /// a pure function of [time], so it needs no per-particle state.

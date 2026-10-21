@@ -7,7 +7,7 @@ import '../models/game_timings.dart';
 
 enum CatMouth { smile, open, chew, tongue }
 
-enum CatMark { none, exclaim }
+enum CatMark { none, exclaim, question }
 
 /// Everything the cat painter needs for one frame, in the cat's own 100x85
 /// drawing units (facing right; the painter mirrors it for left).
@@ -71,6 +71,30 @@ class CatFrame {
 
   /// Small rotation (radians) of the far ear for a gentle twitch.
   final double earTwitch;
+
+  /// The same frame with a different mark above the head.
+  CatFrame withMark(CatMark value) => CatFrame(
+        breath: breath,
+        bodyLift: bodyLift,
+        bodyRotation: bodyRotation,
+        headOffset: headOffset,
+        headTilt: headTilt,
+        feet: feet,
+        raisedPaw: raisedPaw,
+        tailAngle: tailAngle,
+        eyeOpen: eyeOpen,
+        eyeScale: eyeScale,
+        happyEyes: happyEyes,
+        mouth: mouth,
+        gaze: gaze,
+        gazeY: gazeY,
+        motionMarks: motionMarks,
+        eatMarks: eatMarks,
+        sparkle: sparkle,
+        mark: value,
+        shadow: shadow,
+        earTwitch: earTwitch,
+      );
 }
 
 /// Resting spot of the near front paw, matching the painter's leg layout.
@@ -97,7 +121,22 @@ CatFrame catFrameFor({
   double gazeY = 0,
   required double swipe,
   double lift = 0,
+  CatMark mark = CatMark.none,
 }) {
+  final frame = _poseFrame(pose, time, poseTime, walkPhase, gaze, gazeY, swipe, lift);
+  return mark == CatMark.none ? frame : frame.withMark(mark);
+}
+
+CatFrame _poseFrame(
+  CatPose pose,
+  double time,
+  double poseTime,
+  double walkPhase,
+  double gaze,
+  double gazeY,
+  double swipe,
+  double lift,
+) {
   final breath = 1 + 0.022 * math.sin(time * 2.6);
   final blinkT = time % 3.8;
   final eyeOpen = blinkT < 0.16 ? 1 - math.sin(blinkT / 0.16 * math.pi) : 1.0;
@@ -301,6 +340,72 @@ CatFrame catFrameFor({
         eyeOpen: eyeOpen,
         gaze: gaze,
         gazeY: -1,
+      );
+
+    case CatPose.sniff:
+      final twitch = math.sin(poseTime * 16);
+      return CatFrame(
+        breath: breath,
+        headOffset: Offset(3.5 + twitch * 0.8, 1),
+        headTilt: -0.08,
+        tailAngle: 0.2 + math.sin(time * 3) * 0.1,
+        eyeOpen: math.max(0.55, eyeOpen),
+        earTwitch: 0.12,
+        gaze: gaze,
+        gazeY: gazeY - 0.3,
+      );
+
+    case CatPose.scratch:
+      final stroke = math.sin(poseTime * 12);
+      return CatFrame(
+        breath: breath,
+        bodyRotation: -0.85,
+        feet: const [Offset(2, 0), Offset(2, 0), Offset(0, -3), Offset(0, -3)],
+        raisedPaw: Offset(84, 48 + stroke * 8),
+        headOffset: const Offset(1, 2),
+        tailAngle: math.sin(time * 8) * 0.3 - 0.2,
+        eyeScale: 1.1,
+        mouth: CatMouth.open,
+        motionMarks: true,
+      );
+
+    case CatPose.lookDown:
+      return CatFrame(
+        breath: breath,
+        headOffset: const Offset(3, 3),
+        headTilt: 0.25,
+        tailAngle: 0.1,
+        eyeOpen: eyeOpen,
+        eyeScale: 1.15,
+        earTwitch: 0.15,
+        gaze: 0.6,
+        gazeY: 1,
+      );
+
+    case CatPose.innocent:
+      return CatFrame(
+        breath: breath,
+        bodyLift: 5,
+        feet: _sitFeet,
+        headOffset: const Offset(-2, -1),
+        headTilt: 0.14,
+        tailAngle: -0.2 + math.sin(time * 1.4) * 0.1,
+        eyeOpen: eyeOpen,
+        eyeScale: 1.2,
+        mark: poseTime < 1.6 ? CatMark.question : CatMark.none,
+      );
+
+    case CatPose.satisfied:
+      final lick = math.sin(poseTime * 9) > 0.2;
+      return CatFrame(
+        breath: breath,
+        bodyLift: 5,
+        feet: _sitFeet,
+        headOffset: const Offset(-2, -1),
+        tailAngle: 0.3 + math.sin(poseTime * 6) * 0.2,
+        happyEyes: true,
+        mouth: lick ? CatMouth.tongue : CatMouth.smile,
+        sparkle: poseTime,
       );
 
     case CatPose.swat:

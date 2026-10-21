@@ -56,6 +56,69 @@ abstract final class HomePositions {
   static const toyMousePosition = Offset(0.885, 0.712);
 }
 
+abstract final class KitchenPositions {
+  // Static furniture, shared with the kitchen painter so props line up with
+  // the drawing exactly.
+  static const counterTop = 0.44;
+  static const counterRight = 0.50;
+  static const counterFrontBottom = 0.465;
+  static const cabinetDoors = [
+    Rect.fromLTRB(0.015, 0.477, 0.165, 0.615),
+    Rect.fromLTRB(0.18, 0.477, 0.33, 0.615),
+    Rect.fromLTRB(0.345, 0.477, 0.49, 0.615),
+  ];
+  static const stoveLeft = 0.51;
+  static const stoveRight = 0.73;
+  static const fridgeLeft = 0.76;
+  static const fishPanPosition = Offset(0.62, counterTop);
+
+  static const idlePositionA = Offset(0.30, 0.715);
+  static const idlePositionB = Offset(0.44, 0.728);
+  static const idlePositionC = Offset(0.60, 0.715);
+
+  // Glass trouble: up the cabinets, onto the counter, nudge, oops.
+  static const glassCatStartPosition = idlePositionB;
+  static const glassCounterApproachPosition = Offset(0.24, 0.73);
+  static const glassClimbPositionA = Offset(0.17, 0.62);
+  static const glassClimbPositionB = Offset(0.15, 0.50);
+  static const glassCounterIdlePosition = Offset(0.17, counterTop - 0.002);
+  static const glassSpawnPosition = Offset(0.29, counterTop);
+  static const glassPawReachPosition = Offset(0.305, counterTop);
+  static const glassEdgePosition = Offset(0.33, counterTop);
+  static const glassFallWaypointA = Offset(0.355, 0.47);
+  static const glassFallWaypointB = Offset(0.375, 0.62);
+  static const glassLandingPosition = Offset(0.385, 0.765);
+  static const glassCatReactionPosition = glassCounterIdlePosition;
+  static const glassHopDownPosition = Offset(0.26, 0.735);
+  static const glassCatReturnPosition = idlePositionB;
+
+  // Treat time: scratch the right-hand cabinet until it opens.
+  static const treatCatStartPosition = idlePositionB;
+  static const treatCabinetDoorRect = Rect.fromLTRB(0.345, 0.477, 0.49, 0.615);
+  static const treatCabinetDoorPosition = Offset(0.4175, 0.615);
+  static const treatCabinetApproachPosition = Offset(0.53, 0.735);
+  static const treatScratchPosition = Offset(0.49, 0.735);
+  static const treatSpawnPosition = Offset(0.41, 0.605);
+  static const treatRevealPosition = Offset(0.365, 0.668);
+  static const treatEatingPosition = Offset(0.47, 0.735);
+  static const treatServePosition = Offset(0.395, 0.752);
+  static const treatCatReturnPosition = idlePositionB;
+
+  // Fishy surprise: smell it, watch it cook, eat it from a plate on the floor.
+  static const fishCatStartPosition = idlePositionB;
+  static const fishCatSniffPosition = Offset(0.52, 0.73);
+  static const fishCatWatchPosition = Offset(0.42, 0.732);
+  static const fishRawSpawnPosition = Offset(0.62, 0.36);
+  static const fishCookingPosition = Offset(0.62, counterTop - 0.003);
+  static const fishAromaPosition = Offset(0.62, 0.415);
+  static const fishTimerPosition = Offset(0.70, 0.355);
+  static const fishServingSpawnPosition = Offset(0.44, counterTop);
+  static const fishServingMoveWaypoint = Offset(0.38, 0.60);
+  static const fishServingPosition = Offset(0.30, 0.765);
+  static const fishCatEatingPosition = Offset(0.39, 0.738);
+  static const fishCatReturnPosition = idlePositionB;
+}
+
 abstract final class BathPositions {
   static const idlePositionA = Offset(0.52, 0.725);
   static const idlePositionB = Offset(0.64, 0.735);
@@ -142,6 +205,10 @@ abstract final class GameSizes {
   static const brush = 0.13;
   static const towel = 0.21;
   static const tub = 0.42;
+  static const glass = 0.05;
+  static const treat = 0.065;
+  static const fish = 0.11;
+  static const plate = 0.15;
   static const actionButtonWidth = 0.29;
   static const actionButtonHeight = 0.14;
   static const navBarHeight = 0.145;
@@ -167,7 +234,7 @@ class GameLayout {
       Offset(normalized.dx * size.width, normalized.dy * size.height);
 }
 
-enum WanderAction { pause, lick, walk }
+enum WanderAction { pause, lick, walk, sniff }
 
 class WanderStep {
   const WanderStep.pause(this.seconds)
@@ -176,6 +243,9 @@ class WanderStep {
   const WanderStep.lick()
       : action = WanderAction.lick,
         seconds = 0,
+        target = null;
+  const WanderStep.sniff(this.seconds)
+      : action = WanderAction.sniff,
         target = null;
   const WanderStep.walk(Offset this.target)
       : action = WanderAction.walk,

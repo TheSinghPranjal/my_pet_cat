@@ -369,6 +369,22 @@ class CatPainter extends CustomPainter {
       pen.line(top + const Offset(-5, 2), top + const Offset(-7.5, 0), SketchColors.ink, width: 0.9, sketchy: false);
       pen.line(top + const Offset(5, 2), top + const Offset(7.5, 0), SketchColors.ink, width: 0.9, sketchy: false);
     }
+    if (frame.mark == CatMark.question) {
+      final top = hc + const Offset(1, -38);
+      pen.stroke(
+        Path()
+          ..moveTo(top.dx - 3.5, top.dy)
+          ..quadraticBezierTo(top.dx - 3, top.dy - 5, top.dx + 0.5, top.dy - 5)
+          ..quadraticBezierTo(top.dx + 4.5, top.dy - 4.5, top.dx + 3.5, top.dy - 1)
+          ..quadraticBezierTo(top.dx + 2.5, top.dy + 1.5, top.dx, top.dy + 2.5)
+          ..lineTo(top.dx, top.dy + 4.5),
+        SketchColors.ink,
+        width: 1.6,
+        sketchy: false,
+        wobble: 0.1,
+      );
+      pen.fill(ovalPath(top + const Offset(0, 8), 2, 2), SketchColors.ink);
+    }
     if (frame.sparkle > 0) {
       final pulse = (math.sin(frame.sparkle * 9) + 1) / 2;
       pen.star(const Offset(90, 13), 2 + pulse * 2, SketchColors.sunEdge, width: 1.1);

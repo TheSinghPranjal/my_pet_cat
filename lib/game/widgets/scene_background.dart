@@ -6,6 +6,7 @@ import '../models/game_location.dart';
 import '../models/game_positions.dart';
 import '../sketch/sketch.dart';
 import 'bath_background.dart';
+import 'kitchen_background.dart';
 import 'garden_background.dart';
 import 'room_background.dart';
 
@@ -68,6 +69,7 @@ class GameBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     final painter = switch (location) {
       GameLocation.home => HomeRoomPainter(unit),
+      GameLocation.kitchen => KitchenPainter(unit),
       GameLocation.bath => BathroomPainter(unit),
       GameLocation.outdoors => GardenPainter(unit),
     };
@@ -125,6 +127,37 @@ abstract class SceneBackgroundPainter extends CustomPainter {
     }
     pen.line(Offset(-2, top), Offset(w + 2, top), line, width: 1.0, wobble: 0.35, seed: 1);
     pen.line(Offset(-2, top + 0.9), Offset(w + 2, top + 0.9), shade,
+        width: 0.5, wobble: 0.4, seed: 2, sketchy: false);
+  }
+
+  /// Warm wooden planks between the ground line and the floor bottom.
+  void woodFloor(SketchPen pen, double w, double h) {
+    final top = h * SceneMetrics.groundLine;
+    final bottom = h * SceneMetrics.groundBottom;
+    final floor = Path()
+      ..moveTo(-1, top)
+      ..lineTo(w + 1, top)
+      ..lineTo(w + 1, bottom - 2);
+    // Ragged pencil edge where the shading stops.
+    for (var x = w; x > -2; x -= 6) {
+      floor.lineTo(x - 3, bottom + (x.toInt() % 3) * 0.8);
+    }
+    floor.close();
+    pen.fill(floor, SketchColors.woodLight.withValues(alpha: 0.7));
+    pen.hatch(floor, SketchColors.wood.withValues(alpha: 0.35), spacing: 1.6, angle: -0.08, seed: 120);
+    final planks = Paint()
+      ..color = SketchColors.wood.withValues(alpha: 0.6)
+      ..strokeWidth = 0.45;
+    final rnd = math.Random(121);
+    var row = 0;
+    for (var y = top + 5; y < bottom - 1; y += 5.5, row++) {
+      pen.canvas.drawLine(Offset(0, y), Offset(w, y), planks);
+      for (var x = (row.isEven ? 6.0 : 15.0) + rnd.nextDouble() * 4; x < w; x += 22 + rnd.nextDouble() * 6) {
+        pen.canvas.drawLine(Offset(x, y - 5.5), Offset(x, y), planks);
+      }
+    }
+    pen.line(Offset(-2, top), Offset(w + 2, top), SketchColors.ink, width: 1.0, wobble: 0.35, seed: 1);
+    pen.line(Offset(-2, top + 0.9), Offset(w + 2, top + 0.9), SketchColors.wood,
         width: 0.5, wobble: 0.4, seed: 2, sketchy: false);
   }
 

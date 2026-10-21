@@ -24,7 +24,29 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Widget direct launch: mypetcat://game/home?source=widget -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="mypetcat" android:host="game"/>
+            </intent-filter>
+            <!-- Links go through our own launch channel (LaunchLinkBridge), not
+                 Flutter's built-in deep linking, which would push a second route. -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false"/>
         </activity>
+        <receiver android:name=".widget.SmallPetWidget" android:exported="false" android:label="@string/widget_small_label">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/pet_widget_small_info"/>
+        </receiver>
+        <receiver android:name=".widget.MediumPetWidget" android:exported="false" android:label="@string/widget_medium_label">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/pet_widget_medium_info"/>
+        </receiver>
+        <receiver android:name=".widget.LargePetWidget" android:exported="false" android:label="@string/widget_large_label">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/pet_widget_large_info"/>
+        </receiver>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

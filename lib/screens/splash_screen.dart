@@ -6,9 +6,8 @@ import '../game/models/cat_game_state.dart';
 import '../game/sketch/sketch.dart';
 import '../game/widgets/idle_kitten.dart';
 import '../game/widgets/scene_background.dart';
-import 'fade_route.dart';
+import '../navigation/app_routes.dart';
 import 'notebook_title.dart';
-import 'start_screen.dart';
 
 /// Opening page: the kitten hops happily while the title draws in, then the
 /// start screen fades in. Tap anywhere to skip.
@@ -33,7 +32,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   void _continue() {
     if (_left || !mounted) return;
     _left = true;
-    Navigator.of(context).pushReplacement(fadeRoute(const StartScreen()));
+    Navigator.of(context).pushReplacement(AppRoutes.start());
   }
 
   @override

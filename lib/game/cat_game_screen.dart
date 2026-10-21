@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../home_widget/pet_home_widget_service.dart';
+import '../navigation/app_launch_router.dart';
 import 'controllers/cat_game_controller.dart';
 import 'models/activity_definition.dart';
 import 'models/cat_game_state.dart';
@@ -15,6 +17,7 @@ import 'widgets/food_bowl.dart';
 import 'widgets/game_action_button.dart';
 import 'widgets/grooming_props.dart';
 import 'widgets/interactive_object.dart';
+import 'widgets/kitchen_props.dart';
 import 'widgets/location_navigation.dart';
 import 'widgets/scene_background.dart';
 import 'widgets/scene_effects.dart';
@@ -42,17 +45,46 @@ class CatGameScreenState extends State<CatGameScreen>
     super.initState();
     _controller = CatGameController(vsync: this);
     WidgetsBinding.instance.addObserver(this);
+    _controller.stateListenable.addListener(_onStateChanged);
+    _controller.locationListenable.addListener(_recordForWidget);
+    widgetHomeRequests.addListener(_onWidgetHomeRequest);
   }
+
+  CatActivity? _reportedActivity;
+
+  void _onStateChanged() {
+    if (_controller.state != CatGameState.idle) return;
+    final completed = _controller.lastCompletedActivity;
+    final isNew = completed != null && completed != _reportedActivity;
+    _reportedActivity = completed;
+    _recordForWidget(completed: isNew ? completed : null);
+  }
+
+  void _recordForWidget({CatActivity? completed}) {
+    PetHomeWidgetService.instance.record(location: _controller.location, completed: completed);
+  }
+
+  /// A widget tap while the game is open: go back to Home (ignored if an
+  /// activity is running, so nothing is interrupted).
+  void _onWidgetHomeRequest() => _controller.goTo(GameLocation.home);
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _controller.setPaused(state != AppLifecycleState.resumed);
+    // Refresh the home-screen widget exactly when the home screen shows.
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
+      PetHomeWidgetService.instance.flush();
+    }
   }
 
   @override
   void dispose() {
+    widgetHomeRequests.removeListener(_onWidgetHomeRequest);
+    _controller.stateListenable.removeListener(_onStateChanged);
+    _controller.locationListenable.removeListener(_recordForWidget);
     WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
+    PetHomeWidgetService.instance.flush();
     super.dispose();
   }
 
@@ -151,6 +183,7 @@ class CatGameScreenState extends State<CatGameScreen>
                       label: definition.label,
                       semanticLabel: definition.semanticLabel,
                       enabled: enabled,
+                      accent: definition.accent == null ? null : Color(definition.accent!),
                       onPressed: () => _controller.startActivity(definition.activity),
                     ),
                   ),
@@ -320,6 +353,21 @@ class _Playfield extends StatelessWidget {
               hidden: active == CatActivity.play);
           rest(HomePositions.toyMousePosition, InteractiveObject.sizeOf(ObjectKind.mouse, layout.unit) * 0.85,
               0.5, _toyMouse);
+        }
+
+        if (controller.location == GameLocation.kitchen && controller.cabinetOpen > 0) {
+          // The treat cabinet's door, over the drawn door at the same rect.
+          const door = KitchenPositions.treatCabinetDoorRect;
+          final topLeft = layout.toPixels(door.topLeft);
+          final size = Size(door.width * layout.size.width, door.height * layout.size.height);
+          items.add((
+            door.bottom - 0.001,
+            Positioned(
+              left: topLeft.dx,
+              top: topLeft.dy,
+              child: CustomPaint(size: size, painter: CabinetDoorPainter(open: controller.cabinetOpen)),
+            ),
+          ));
         }
 
         if (controller.location == GameLocation.bath) {

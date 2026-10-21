@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../game/cat_game_screen.dart';
 import '../game/sketch/sketch.dart';
 import '../game/widgets/cat_character.dart';
 import '../game/widgets/food_bowl.dart';
@@ -10,6 +9,8 @@ import '../game/widgets/game_action_button.dart';
 import '../game/widgets/idle_kitten.dart';
 import '../game/widgets/scene_background.dart';
 import '../game/widgets/wool_ball.dart';
+import '../home_widget/add_widget_sheet.dart';
+import '../navigation/app_routes.dart';
 import 'fade_route.dart';
 import 'how_to_play_screen.dart';
 import 'notebook_title.dart';
@@ -68,7 +69,7 @@ class StartScreen extends StatelessWidget {
                                   semanticLabel: 'Play',
                                   primary: true,
                                   icon: const _PawIconPainter(),
-                                  onPressed: () => Navigator.of(context).push(fadeRoute(const CatGameScreen())),
+                                  onPressed: () => Navigator.of(context).push(AppRoutes.game()),
                                 )),
                             at(0.5, 0.875, Size(unit * 0.64, unit * 0.13),
                                 _MenuButton(
@@ -76,6 +77,27 @@ class StartScreen extends StatelessWidget {
                                   semanticLabel: 'How to play',
                                   icon: const _QuestionIconPainter(),
                                   onPressed: () => Navigator.of(context).push(fadeRoute(const HowToPlayScreen())),
+                                )),
+                            at(0.5, 0.955, Size(stage.width * 0.9, unit * 0.075),
+                                SketchPressable(
+                                  enabled: true,
+                                  semanticLabel: 'Add Kitty to your home screen',
+                                  onPressed: () => AddWidgetSheet.show(context),
+                                  child: Center(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        '+ Add Kitty to your home screen',
+                                        style: TextStyle(
+                                          color: SketchColors.inkSoft,
+                                          fontSize: unit * 0.038,
+                                          fontWeight: FontWeight.w700,
+                                          decoration: TextDecoration.underline,
+                                          decorationColor: SketchColors.inkSoft,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 )),
                           ],
                         ),

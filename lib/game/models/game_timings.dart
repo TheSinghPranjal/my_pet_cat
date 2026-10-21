@@ -31,6 +31,18 @@ abstract final class GameTimings {
   static const towelRubs = 8;
   static const shake = Duration(milliseconds: 1200);
 
+  // Kitchen.
+  static const sniff = Duration(milliseconds: 1200);
+  static const glassTap = Duration(milliseconds: 500);
+  static const glassFall = Duration(milliseconds: 700);
+  static const scratchBurst = Duration(milliseconds: 1100);
+  static const scratchBursts = 3;
+  static const cabinetDoor = Duration(milliseconds: 450);
+  static const treatEating = Duration(milliseconds: 2500);
+  static const fishCooking = Duration(seconds: 4);
+  static const fishEating = Duration(seconds: 4);
+  static const satisfied = Duration(milliseconds: 1200);
+
   // Outdoors.
   static const climbSegment = Duration(milliseconds: 850);
 

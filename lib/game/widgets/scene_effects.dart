@@ -37,6 +37,20 @@ class SceneEffectsPainter extends CustomPainter {
           _leaves(pen, e);
         case EffectKind.puff:
           _puff(pen, e);
+        case EffectKind.aroma:
+          _curls(pen, e, SketchColors.sunEdge, period: 1.6);
+        case EffectKind.steam:
+          _curls(pen, e, SketchColors.inkSoft, period: 1.2);
+        case EffectKind.heat:
+          _heat(pen, e);
+        case EffectKind.scratches:
+          _scratches(pen, e);
+        case EffectKind.impact:
+          _impact(pen, e);
+        case EffectKind.hearts:
+          _hearts(pen, e);
+        case EffectKind.timer:
+          _timer(pen, e);
       }
       canvas.restore();
     }
@@ -123,6 +137,84 @@ class SceneEffectsPainter extends CustomPainter {
           width: 0.5, sketchy: false, wobble: 0.1);
     }
     pen.popMarks(const Offset(0, -2), 6, t, _a(SketchColors.ink, e.fade), width: 0.6);
+  }
+
+  /// Two or three wavy curls drifting up along fixed paths.
+  void _curls(SketchPen pen, SceneEffect e, Color color, {required double period}) {
+    for (var i = 0; i < 3; i++) {
+      final ph = (e.time / period + i / 3) % 1;
+      final x = -4.0 + i * 4;
+      final y = -ph * 14;
+      final alpha = e.fade * math.sin(ph * math.pi);
+      pen.stroke(
+        Path()
+          ..moveTo(x, y)
+          ..quadraticBezierTo(x - 2.2, y - 2.5, x, y - 5)
+          ..quadraticBezierTo(x + 2.2, y - 7.5, x, y - 10),
+        _a(color, alpha),
+        width: 0.7,
+        sketchy: false,
+        wobble: 0,
+      );
+    }
+  }
+
+  void _heat(SketchPen pen, SceneEffect e) {
+    for (var i = 0; i < 4; i++) {
+      final flicker = (math.sin(e.time * 11 + i * 1.9) + 1) / 2;
+      final x = -6 + i * 4.0;
+      pen.line(Offset(x, 1.2), Offset(x + 0.4, 1.2 + 1.2 + flicker * 1.4), _a(SketchColors.sunEdge, e.fade),
+          width: 0.6, sketchy: false, wobble: 0);
+    }
+  }
+
+  void _scratches(SketchPen pen, SceneEffect e) {
+    final shown = ((e.time * 6) % 4).floor();
+    for (var i = 0; i < 3; i++) {
+      if (i > shown) break;
+      final x = -2.5 + i * 2.2;
+      pen.line(Offset(x, -3), Offset(x - 1.5, 3), _a(SketchColors.ink, e.fade), width: 0.6, sketchy: false, wobble: 0);
+    }
+  }
+
+  void _impact(SketchPen pen, SceneEffect e) {
+    final t = (e.time / (e.duration ?? 0.6)).clamp(0.0, 1.0);
+    pen.popMarks(const Offset(0, -2), 5, t, _a(SketchColors.ink, e.fade), width: 0.7);
+    pen.star(Offset(-5 - t * 3, -4 - t * 2), 1.4 * (1 - t), _a(SketchColors.sunEdge, e.fade), width: 0.6);
+    pen.star(Offset(5 + t * 3, -5 - t * 2), 1.2 * (1 - t), _a(SketchColors.pinkDeep, e.fade), width: 0.6);
+  }
+
+  void _hearts(SketchPen pen, SceneEffect e) {
+    for (var i = 0; i < 3; i++) {
+      final ph = (e.time / 1.4 + i / 3) % 1;
+      final c = Offset(-4 + i * 4 + math.sin(ph * 5 + i) * 1.2, -ph * 9);
+      final s = 0.5 + 0.3 * (i % 2);
+      final heart = Path()
+        ..moveTo(c.dx, c.dy + 3 * s)
+        ..cubicTo(c.dx - 4.5 * s, c.dy, c.dx - 2.5 * s, c.dy - 3.5 * s, c.dx, c.dy - 1.4 * s)
+        ..cubicTo(c.dx + 2.5 * s, c.dy - 3.5 * s, c.dx + 4.5 * s, c.dy, c.dx, c.dy + 3 * s)
+        ..close();
+      final alpha = e.fade * math.sin(ph * math.pi);
+      pen.fill(heart, _a(SketchColors.pink, alpha));
+      pen.stroke(heart, _a(SketchColors.pinkDeep, alpha), width: 0.4, sketchy: false, wobble: 0);
+    }
+  }
+
+  /// A little kitchen-timer doodle whose wedge fills as cooking progresses.
+  void _timer(SketchPen pen, SceneEffect e) {
+    final t = (e.time / (e.duration ?? 4)).clamp(0.0, 1.0);
+    final alpha = e.fade * (t > 0.92 ? (1 - t) / 0.08 : 1);
+    final face = ovalPath(Offset.zero, 8, 8);
+    pen.fill(face, _a(SketchColors.white, alpha));
+    pen.fill(
+      Path()
+        ..moveTo(0, 0)
+        ..arcTo(Rect.fromCircle(center: Offset.zero, radius: 3.4), -math.pi / 2, t * math.pi * 2, false)
+        ..close(),
+      _a(SketchColors.coral, alpha * 0.8),
+    );
+    pen.stroke(face, _a(SketchColors.ink, alpha), width: 0.6, sketchy: false, wobble: 0.1);
+    pen.line(const Offset(0, -4), const Offset(0, -5.4), _a(SketchColors.ink, alpha), width: 0.8, sketchy: false, wobble: 0);
   }
 
   @override
