@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../game/models/cat_look.dart';
 import '../game/sketch/sketch.dart';
 import '../game/widgets/cat_character.dart';
 import '../game/widgets/food_bowl.dart';
@@ -60,9 +61,16 @@ class StartScreen extends StatelessWidget {
                             at(0.2, 0.585, Size(bowlWidth, bowlWidth / FoodBowl.aspect),
                                 const CustomPaint(painter: _RestingBowl())),
                             at(0.79, 0.59, ball, const CustomPaint(painter: _RestingBall())),
-                            // Kitten stands with her paws on the rug line.
-                            at(0.5, 0.6 - kittenHeight / stage.height / 2, Size(kittenWidth, kittenHeight),
-                                IdleKitten(width: kittenWidth)),
+                            // Kitten stands with her paws on the rug line; swipe her
+                            // to try another look.
+                            Positioned(
+                              left: 0,
+                              right: 0,
+                              top: 0.6 * stage.height - kittenHeight,
+                              height: kittenHeight,
+                              child: _CatLookCarousel(kittenWidth: kittenWidth),
+                            ),
+                            at(0.5, 0.655, Size(stage.width * 0.9, unit * 0.065), const _CatLookLabel()),
                             at(0.5, 0.74, Size(unit * 0.64, unit * 0.17),
                                 _MenuButton(
                                   label: 'Play',
@@ -110,6 +118,124 @@ class StartScreen extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+/// Swipeable kittens, one per [CatLook]; the one left in view becomes the
+/// player's look everywhere in the app.
+class _CatLookCarousel extends StatefulWidget {
+  const _CatLookCarousel({required this.kittenWidth});
+
+  final double kittenWidth;
+
+  @override
+  State<_CatLookCarousel> createState() => _CatLookCarouselState();
+}
+
+class _CatLookCarouselState extends State<_CatLookCarousel> {
+  late final _pages = PageController(initialPage: catLook.value.index);
+
+  @override
+  void initState() {
+    super.initState();
+    catLook.addListener(_follow);
+  }
+
+  @override
+  void dispose() {
+    catLook.removeListener(_follow);
+    _pages.dispose();
+    super.dispose();
+  }
+
+  /// Slides to a look picked some other way (the arrows under the rug).
+  void _follow() {
+    if (!_pages.hasClients) return;
+    final target = catLook.value.index;
+    if ((_pages.page ?? target).round() == target) return;
+    _pages.animateToPage(target, duration: const Duration(milliseconds: 350), curve: Curves.easeOutCubic);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const looks = CatLook.values;
+    return ValueListenableBuilder(
+      valueListenable: catLook,
+      builder: (context, look, child) => Semantics(
+        label: "Kitty's look: ${look.label}, ${look.index + 1} of ${looks.length}",
+        hint: 'Swipe left or right to change her look',
+        onIncrease: look.index < looks.length - 1 ? () => catLook.select(looks[look.index + 1]) : null,
+        onDecrease: look.index > 0 ? () => catLook.select(looks[look.index - 1]) : null,
+        child: child,
+      ),
+      child: PageView.builder(
+        controller: _pages,
+        itemCount: looks.length,
+        onPageChanged: (i) => catLook.select(looks[i]),
+        itemBuilder: (context, i) => ExcludeSemantics(
+          child: Center(child: IdleKitten(width: widget.kittenWidth, look: looks[i])),
+        ),
+      ),
+    );
+  }
+}
+
+/// "‹ Fluffy Kitty ●○ ›" under the rug: names the look and steps through them.
+class _CatLookLabel extends StatelessWidget {
+  const _CatLookLabel();
+
+  @override
+  Widget build(BuildContext context) {
+    const looks = CatLook.values;
+    return LayoutBuilder(
+      builder: (context, box) {
+        final h = box.maxHeight;
+        Widget arrow(String glyph, String label, int step) => SketchPressable(
+              enabled: true,
+              semanticLabel: label,
+              onPressed: () => catLook.select(looks[(catLook.value.index + step) % looks.length]),
+              child: SizedBox(
+                width: h * 1.6,
+                height: h,
+                child: Center(
+                  child: Text(glyph,
+                      style: TextStyle(color: SketchColors.ink, fontSize: h * 0.9, fontWeight: FontWeight.w900, height: 1)),
+                ),
+              ),
+            );
+        return ValueListenableBuilder(
+          valueListenable: catLook,
+          builder: (context, look, _) => Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              arrow('‹', 'Previous look', looks.length - 1),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    look.label,
+                    style: TextStyle(color: SketchColors.ink, fontSize: h * 0.5, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+              SizedBox(width: h * 0.25),
+              for (final other in looks)
+                Container(
+                  width: h * 0.2,
+                  height: h * 0.2,
+                  margin: EdgeInsets.symmetric(horizontal: h * 0.06),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: other == look ? SketchColors.ink : null,
+                    border: Border.all(color: SketchColors.ink, width: 1),
+                  ),
+                ),
+              arrow('›', 'Next look', 1),
+            ],
+          ),
+        );
+      },
     );
   }
 }

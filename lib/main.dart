@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'game/models/cat_look.dart';
 import 'navigation/app_launch_router.dart';
 import 'navigation/app_routes.dart';
 import 'navigation/widget_deep_link_handler.dart';
@@ -12,7 +13,8 @@ Future<void> main() async {
   // flashes the splash or menu. The native launch screen (same paper color)
   // covers this short wait.
   final links = LaunchLinkChannel();
-  final destination = AppLaunchRouter.parse(await links.takeInitialLink());
+  final (link, _) = await (links.takeInitialLink(), catLook.load()).wait;
+  final destination = AppLaunchRouter.parse(link);
   runApp(MyPetCatApp(initialDestination: destination, links: links));
 }
 

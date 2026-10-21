@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../game/animations/cat_animations.dart';
+import '../game/models/cat_look.dart';
 import '../game/sketch/sketch.dart';
 import '../game/widgets/cat_character.dart';
 import '../game/widgets/food_bowl.dart';
@@ -13,8 +14,8 @@ import '../game/widgets/wool_ball.dart';
 class HowToPlayScreen extends StatelessWidget {
   const HowToPlayScreen({super.key});
 
-  static final _tips = <(CustomPainter, double, String, String)>[
-    (CatPainter(frame: const CatFrame(), facing: 1), CatCharacter.aspect, 'Meet Kitty',
+  static List<(CustomPainter, double, String, String)> get _tips => [
+    (CatPainter(frame: const CatFrame(), facing: 1, look: catLook.value), CatCharacter.aspect, 'Meet Kitty',
         'She lives in your notebook. When nothing is happening she blinks, licks her paw and wanders around.'),
     (FoodBowlPainter(), FoodBowl.aspect, 'Pick an activity',
         'Tap one of the three cards at the bottom. At Home you can Feed her, Play with wool or Catch Mice.'),

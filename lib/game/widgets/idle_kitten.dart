@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 
 import '../animations/cat_animations.dart';
 import '../models/cat_game_state.dart';
+import '../models/cat_look.dart';
 import 'cat_character.dart';
 
 /// The same kitten as in the game, animating on its own clock. Used on the
@@ -14,6 +15,7 @@ class IdleKitten extends StatefulWidget {
     this.pose = CatPose.idle,
     this.loopSeconds,
     this.facing = 1,
+    this.look,
   });
 
   final double width;
@@ -23,6 +25,9 @@ class IdleKitten extends StatefulWidget {
   /// hops on the splash).
   final double? loopSeconds;
   final double facing;
+
+  /// Drawing style; follows the player's choice when null.
+  final CatLook? look;
 
   @override
   State<IdleKitten> createState() => _IdleKittenState();
@@ -57,6 +62,6 @@ class _IdleKittenState extends State<IdleKitten> with SingleTickerProviderStateM
       gaze: 0,
       swipe: 0,
     );
-    return CatCharacter(frame: frame, facing: widget.facing, width: widget.width);
+    return CatCharacter(frame: frame, facing: widget.facing, width: widget.width, look: widget.look);
   }
 }

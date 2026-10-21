@@ -13,6 +13,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_pet_cat/game/animations/cat_animations.dart';
+import 'package:my_pet_cat/game/models/cat_look.dart';
 import 'package:my_pet_cat/game/sketch/sketch.dart';
 import 'package:my_pet_cat/game/widgets/cat_character.dart';
 import 'package:my_pet_cat/game/widgets/food_bowl.dart';
@@ -65,7 +66,7 @@ void _stage(Canvas canvas, double s, CatFrame frame) {
 
   canvas.save();
   canvas.translate(6 * s, 6 * s);
-  CatPainter(frame: frame, facing: 1).paint(canvas, Size(100 * s, 85 * s));
+  CatPainter(frame: frame, facing: 1, look: CatLook.fluffy).paint(canvas, Size(100 * s, 85 * s));
   canvas.restore();
 }
 
