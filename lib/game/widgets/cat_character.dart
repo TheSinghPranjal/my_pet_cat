@@ -4,6 +4,9 @@ import '../animations/cat_animations.dart';
 import '../models/cat_look.dart';
 import 'cat_looks/classic_cat_painter.dart';
 import 'cat_looks/fluffy_cat_painter.dart';
+import 'cat_looks/ginger_cat_painter.dart';
+import 'cat_looks/tortie_cat_painter.dart';
+import 'cat_looks/tuxedo_cat_painter.dart';
 
 /// The kitten, drawn procedurally so every pose shares the exact same face,
 /// proportions, stripes and anchor (bottom-center of the paws).
@@ -45,6 +48,9 @@ class CatPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) => switch (look) {
     CatLook.fluffy => FluffyCatPainter(frame: frame, facing: facing),
     CatLook.classic => ClassicCatPainter(frame: frame, facing: facing),
+    CatLook.ginger => GingerCatPainter(frame: frame, facing: facing),
+    CatLook.tuxedo => TuxedoCatPainter(frame: frame, facing: facing),
+    CatLook.tortie => TortieCatPainter(frame: frame, facing: facing),
   }.paint(canvas, size);
 
   @override

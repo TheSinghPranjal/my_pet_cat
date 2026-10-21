@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'game/models/cat_look.dart';
+import 'game/cats/selected_cat.dart';
+import 'game/save/game_store.dart';
 import 'navigation/app_launch_router.dart';
 import 'navigation/app_routes.dart';
 import 'navigation/widget_deep_link_handler.dart';
@@ -13,7 +14,8 @@ Future<void> main() async {
   // flashes the splash or menu. The native launch screen (same paper color)
   // covers this short wait.
   final links = LaunchLinkChannel();
-  final (link, _) = await (links.takeInitialLink(), catLook.load()).wait;
+  final (link, _) = await (links.takeInitialLink(), GameStore.instance.load()).wait;
+  selectedCat.syncFromSave();
   final destination = AppLaunchRouter.parse(link);
   runApp(MyPetCatApp(initialDestination: destination, links: links));
 }
@@ -34,10 +36,20 @@ class MyPetCatAppState extends State<MyPetCatApp> {
   final _navigatorKey = GlobalKey<NavigatorState>();
   final _routes = TopRouteObserver();
 
+  /// Writes the save right away whenever the app leaves the screen.
+  late final AppLifecycleListener _lifecycle;
+
   @override
   void initState() {
     super.initState();
+    _lifecycle = AppLifecycleListener(onHide: GameStore.instance.flush, onPause: GameStore.instance.flush);
     widget.links?.listen(handleLink);
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
   }
 
   /// Handles a link that arrives while the app is already running.

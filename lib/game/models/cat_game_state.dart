@@ -1,10 +1,16 @@
 import 'dart:ui';
 
-/// The single authoritative gameplay state.
+/// What the game is doing at the highest level. Activities and location
+/// changes are only accepted while [idle].
+enum GameMode { idle, busy, changingLocation }
+
+/// The gameplay state, with a finer label for the step a script is on.
 ///
-/// Activities and location changes are only accepted while [idle].
+/// Scripts set these with `Phase` steps. New activities only use [busy];
+/// the other busy values label the steps of the 1.x activities.
 enum CatGameState {
   idle,
+  busy,
   walkingToFood,
   eating,
   returningFromFood,
@@ -34,7 +40,13 @@ enum CatGameState {
   fishServing,
   fishEating,
   returningToIdle,
-  changingLocation,
+  changingLocation;
+
+  GameMode get mode => switch (this) {
+    idle => GameMode.idle,
+    changingLocation => GameMode.changingLocation,
+    _ => GameMode.busy,
+  };
 }
 
 /// Which animation set the kitten is currently showing.

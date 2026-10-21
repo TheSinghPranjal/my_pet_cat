@@ -2,7 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../game/models/cat_look.dart';
+import '../game/cats/cat_profile.dart';
+import '../game/cats/selected_cat.dart';
+import '../game/save/game_store.dart';
 import '../game/sketch/sketch.dart';
 import '../game/widgets/cat_character.dart';
 import '../game/widgets/food_bowl.dart';
@@ -18,8 +20,21 @@ import 'notebook_title.dart';
 
 /// The start page: title, the kitten waiting on her rug, and the Play and
 /// How to Play buttons.
-class StartScreen extends StatelessWidget {
+class StartScreen extends StatefulWidget {
   const StartScreen({super.key});
+
+  @override
+  State<StartScreen> createState() => _StartScreenState();
+}
+
+class _StartScreenState extends State<StartScreen> {
+  final _picker = _CatPicker();
+
+  @override
+  void dispose() {
+    _picker.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,15 +77,15 @@ class StartScreen extends StatelessWidget {
                                 const CustomPaint(painter: _RestingBowl())),
                             at(0.79, 0.59, ball, const CustomPaint(painter: _RestingBall())),
                             // Kitten stands with her paws on the rug line; swipe her
-                            // to try another look.
+                            // to meet another cat.
                             Positioned(
                               left: 0,
                               right: 0,
                               top: 0.6 * stage.height - kittenHeight,
                               height: kittenHeight,
-                              child: _CatLookCarousel(kittenWidth: kittenWidth),
+                              child: _CatCarousel(picker: _picker, kittenWidth: kittenWidth),
                             ),
-                            at(0.5, 0.655, Size(stage.width * 0.9, unit * 0.065), const _CatLookLabel()),
+                            at(0.5, 0.662, Size(stage.width * 0.9, unit * 0.09), _CatLabel(picker: _picker)),
                             at(0.5, 0.74, Size(unit * 0.64, unit * 0.17),
                                 _MenuButton(
                                   label: 'Play',
@@ -122,79 +137,135 @@ class StartScreen extends StatelessWidget {
   }
 }
 
-/// Swipeable kittens, one per [CatLook]; the one left in view becomes the
-/// player's look everywhere in the app.
-class _CatLookCarousel extends StatefulWidget {
-  const _CatLookCarousel({required this.kittenWidth});
+/// Which cat the carousel shows, and whether she can be picked.
+///
+/// Unlocked cats become the selected cat as soon as they are in view;
+/// locked ones only show as a pencil silhouette with how to unlock them.
+class _CatPicker {
+  _CatPicker() : viewed = ValueNotifier(CatProfiles.all.indexOf(selectedCat.value)) {
+    selectedCat.addListener(_followSelection);
+    viewed.addListener(_selectViewed);
+  }
 
+  static const cats = CatProfiles.all;
+
+  /// Index into [cats] of the cat in view.
+  final ValueNotifier<int> viewed;
+
+  static bool isUnlocked(CatProfile cat) => GameStore.instance.save.isCatUnlocked(cat.id);
+
+  void step(int delta) => viewed.value = (viewed.value + delta) % cats.length;
+
+  void _selectViewed() {
+    final cat = cats[viewed.value];
+    if (isUnlocked(cat)) selectedCat.select(cat);
+  }
+
+  /// Follows a cat picked some other way.
+  void _followSelection() {
+    final i = cats.indexOf(selectedCat.value);
+    if (i >= 0 && cats[viewed.value] != selectedCat.value) viewed.value = i;
+  }
+
+  void dispose() {
+    selectedCat.removeListener(_followSelection);
+    viewed.dispose();
+  }
+}
+
+/// Swipeable kittens, one per cat; locked cats are pencil silhouettes.
+class _CatCarousel extends StatefulWidget {
+  const _CatCarousel({required this.picker, required this.kittenWidth});
+
+  final _CatPicker picker;
   final double kittenWidth;
 
   @override
-  State<_CatLookCarousel> createState() => _CatLookCarouselState();
+  State<_CatCarousel> createState() => _CatCarouselState();
 }
 
-class _CatLookCarouselState extends State<_CatLookCarousel> {
-  late final _pages = PageController(initialPage: catLook.value.index);
+class _CatCarouselState extends State<_CatCarousel> {
+  late final _pages = PageController(initialPage: widget.picker.viewed.value);
 
   @override
   void initState() {
     super.initState();
-    catLook.addListener(_follow);
+    widget.picker.viewed.addListener(_follow);
   }
 
   @override
   void dispose() {
-    catLook.removeListener(_follow);
+    widget.picker.viewed.removeListener(_follow);
     _pages.dispose();
     super.dispose();
   }
 
-  /// Slides to a look picked some other way (the arrows under the rug).
+  /// Slides to a cat picked some other way (the arrows under the rug).
   void _follow() {
     if (!_pages.hasClients) return;
-    final target = catLook.value.index;
+    final target = widget.picker.viewed.value;
     if ((_pages.page ?? target).round() == target) return;
     _pages.animateToPage(target, duration: const Duration(milliseconds: 350), curve: Curves.easeOutCubic);
   }
 
   @override
   Widget build(BuildContext context) {
-    const looks = CatLook.values;
+    const cats = _CatPicker.cats;
+    final picker = widget.picker;
     return ValueListenableBuilder(
-      valueListenable: catLook,
-      builder: (context, look, child) => Semantics(
-        label: "Kitty's look: ${look.label}, ${look.index + 1} of ${looks.length}",
-        hint: 'Swipe left or right to change her look',
-        onIncrease: look.index < looks.length - 1 ? () => catLook.select(looks[look.index + 1]) : null,
-        onDecrease: look.index > 0 ? () => catLook.select(looks[look.index - 1]) : null,
-        child: child,
-      ),
+      valueListenable: picker.viewed,
+      builder: (context, i, child) {
+        final cat = cats[i];
+        final locked = !_CatPicker.isUnlocked(cat);
+        return Semantics(
+          label: 'Cat: ${cat.name}, ${cat.persona.tag}${locked ? ', locked' : ''}, ${i + 1} of ${cats.length}',
+          hint: 'Swipe left or right to meet another cat',
+          onIncrease: i < cats.length - 1 ? () => picker.viewed.value = i + 1 : null,
+          onDecrease: i > 0 ? () => picker.viewed.value = i - 1 : null,
+          child: child,
+        );
+      },
       child: PageView.builder(
         controller: _pages,
-        itemCount: looks.length,
-        onPageChanged: (i) => catLook.select(looks[i]),
-        itemBuilder: (context, i) => ExcludeSemantics(
-          child: Center(child: IdleKitten(width: widget.kittenWidth, look: looks[i])),
-        ),
+        itemCount: cats.length,
+        onPageChanged: (i) => picker.viewed.value = i,
+        itemBuilder: (context, i) {
+          Widget kitten = IdleKitten(width: widget.kittenWidth, look: cats[i].look);
+          if (!_CatPicker.isUnlocked(cats[i])) {
+            // A soft pencil silhouette: the same cat, flattened to graphite.
+            kitten = Opacity(
+              opacity: 0.35,
+              child: ColorFiltered(
+                colorFilter: const ColorFilter.mode(SketchColors.graphite, BlendMode.srcIn),
+                child: kitten,
+              ),
+            );
+          }
+          return ExcludeSemantics(child: Center(child: kitten));
+        },
       ),
     );
   }
 }
 
-/// "‹ Fluffy Kitty ●○ ›" under the rug: names the look and steps through them.
-class _CatLookLabel extends StatelessWidget {
-  const _CatLookLabel();
+/// Under the rug: "‹ Mochi · Curious explorer ●○○○○ ›", then three trait
+/// pips, or how to unlock a locked cat.
+class _CatLabel extends StatelessWidget {
+  const _CatLabel({required this.picker});
+
+  final _CatPicker picker;
 
   @override
   Widget build(BuildContext context) {
-    const looks = CatLook.values;
+    const cats = _CatPicker.cats;
     return LayoutBuilder(
       builder: (context, box) {
-        final h = box.maxHeight;
+        final h = box.maxHeight * 0.62;
+        final small = box.maxHeight - h;
         Widget arrow(String glyph, String label, int step) => SketchPressable(
               enabled: true,
               semanticLabel: label,
-              onPressed: () => catLook.select(looks[(catLook.value.index + step) % looks.length]),
+              onPressed: () => picker.step(step),
               child: SizedBox(
                 width: h * 1.6,
                 height: h,
@@ -205,37 +276,107 @@ class _CatLookLabel extends StatelessWidget {
               ),
             );
         return ValueListenableBuilder(
-          valueListenable: catLook,
-          builder: (context, look, _) => Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              arrow('‹', 'Previous look', looks.length - 1),
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    look.label,
-                    style: TextStyle(color: SketchColors.ink, fontSize: h * 0.5, fontWeight: FontWeight.w800),
+          valueListenable: picker.viewed,
+          builder: (context, viewed, _) {
+            final cat = cats[viewed];
+            final locked = !_CatPicker.isUnlocked(cat);
+            final p = cat.persona;
+            return Column(
+              children: [
+                SizedBox(
+                  height: h,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      arrow('‹', 'Previous cat', cats.length - 1),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text.rich(
+                            TextSpan(children: [
+                              TextSpan(text: cat.name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                              TextSpan(
+                                text: ' · ${p.tag}',
+                                style: const TextStyle(fontWeight: FontWeight.w600, fontStyle: FontStyle.italic),
+                              ),
+                            ]),
+                            style: TextStyle(color: locked ? SketchColors.graphite : SketchColors.ink, fontSize: h * 0.5),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: h * 0.25),
+                      for (final (i, _) in cats.indexed)
+                        Container(
+                          width: h * 0.2,
+                          height: h * 0.2,
+                          margin: EdgeInsets.symmetric(horizontal: h * 0.06),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: i == viewed ? SketchColors.ink : null,
+                            border: Border.all(color: SketchColors.ink, width: 1),
+                          ),
+                        ),
+                      arrow('›', 'Next cat', 1),
+                    ],
                   ),
                 ),
-              ),
-              SizedBox(width: h * 0.25),
-              for (final other in looks)
-                Container(
-                  width: h * 0.2,
-                  height: h * 0.2,
-                  margin: EdgeInsets.symmetric(horizontal: h * 0.06),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: other == look ? SketchColors.ink : null,
-                    border: Border.all(color: SketchColors.ink, width: 1),
+                SizedBox(
+                  height: small,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: locked
+                        ? Text(
+                            'Unlock at ${cat.unlockRule.stars} friendship stars',
+                            style: TextStyle(color: SketchColors.inkSoft, fontSize: small * 0.75, fontWeight: FontWeight.w700),
+                          )
+                        : Row(
+                            children: [
+                              _TraitPips('Energy', p.energy, size: small),
+                              SizedBox(width: small),
+                              _TraitPips('Appetite', p.appetite, size: small),
+                              SizedBox(width: small),
+                              _TraitPips('Cuddles', p.cuddliness, size: small),
+                            ],
+                          ),
                   ),
                 ),
-              arrow('›', 'Next look', 1),
-            ],
-          ),
+              ],
+            );
+          },
         );
       },
+    );
+  }
+}
+
+/// "Energy ●●●○○": a trait (0..1) as five pencil dots.
+class _TraitPips extends StatelessWidget {
+  const _TraitPips(this.label, this.value, {required this.size});
+
+  final String label;
+  final double value;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final filled = (value * 5).round();
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label, style: TextStyle(color: SketchColors.inkSoft, fontSize: size * 0.7, fontWeight: FontWeight.w700)),
+        SizedBox(width: size * 0.25),
+        for (var i = 0; i < 5; i++)
+          Container(
+            width: size * 0.42,
+            height: size * 0.42,
+            margin: EdgeInsets.symmetric(horizontal: size * 0.05),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: i < filled ? SketchColors.coral : null,
+              border: Border.all(color: SketchColors.coral, width: 1),
+            ),
+          ),
+      ],
     );
   }
 }

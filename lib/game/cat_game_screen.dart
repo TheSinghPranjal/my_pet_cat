@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 
 import '../home_widget/pet_home_widget_service.dart';
 import '../navigation/app_launch_router.dart';
+import 'cats/selected_cat.dart';
 import 'controllers/cat_game_controller.dart';
+import 'environments/environment_id.dart';
 import 'models/activity_definition.dart';
 import 'models/cat_game_state.dart';
 import 'models/game_location.dart';
 import 'models/game_positions.dart';
+import 'save/game_store.dart';
 import 'sketch/sketch.dart';
 import 'widgets/activity_icon.dart';
 import 'widgets/cat_character.dart';
@@ -43,7 +46,14 @@ class CatGameScreenState extends State<CatGameScreen>
   @override
   void initState() {
     super.initState();
-    _controller = CatGameController(vsync: this);
+    final store = GameStore.instance;
+    _controller = CatGameController(
+      vsync: this,
+      persona: selectedCat.value.persona,
+      wanderEnabled: store.save.settings.wander,
+      onNeeds: (deltas) => store.applyNeeds(selectedCat.value.id, deltas),
+      onCompleted: (activity) => store.update((save) => save.cat(selectedCat.value.id).completed.add(activity.name)),
+    );
     WidgetsBinding.instance.addObserver(this);
     _controller.stateListenable.addListener(_onStateChanged);
     _controller.locationListenable.addListener(_recordForWidget);
@@ -62,6 +72,10 @@ class CatGameScreenState extends State<CatGameScreen>
 
   void _recordForWidget({CatActivity? completed}) {
     PetHomeWidgetService.instance.record(location: _controller.location, completed: completed);
+    final place = EnvironmentId.fromLocation(_controller.location);
+    if (GameStore.instance.save.lastEnvironment != place) {
+      GameStore.instance.update((save) => save.lastEnvironment = place);
+    }
   }
 
   /// A widget tap while the game is open: go back to Home (ignored if an

@@ -1,37 +1,35 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-/// The kitten's drawing styles, picked by swiping her on the start screen.
+import '../cats/cat_profile.dart';
+import '../cats/selected_cat.dart';
+
+/// The cats' drawing styles; each [CatProfile] has one.
 enum CatLook {
   fluffy('Fluffy Kitty'),
-  classic('Classic Kitty');
+  classic('Classic Kitty'),
+  ginger('Chubby Ginger'),
+  tuxedo('Tuxedo'),
+  tortie('Tortoiseshell');
 
   const CatLook(this.label);
 
   final String label;
 }
 
-/// The player's chosen look, shared by every kitten in the app.
+/// The selected cat's look, for painters and the look carousel. The
+/// selected cat ([selectedCat]) is the source of truth and is what gets
+/// saved; changing this picks the cat with that look.
 final catLook = CatLookSetting();
 
-/// Remembers the chosen [CatLook] between launches.
 class CatLookSetting extends ValueNotifier<CatLook> {
-  CatLookSetting() : super(CatLook.fluffy);
-
-  static const _key = 'cat_look';
-
-  Future<void> load() async {
-    try {
-      final saved = (await SharedPreferences.getInstance()).getString(_key);
-      value = CatLook.values.firstWhere((look) => look.name == saved, orElse: () => value);
-    } catch (_) {
-      // No storage (tests, unsupported platform): keep the default look.
-    }
+  CatLookSetting() : super(selectedCat.value.look) {
+    selectedCat.addListener(() => value = selectedCat.value.look);
+    addListener(() {
+      if (selectedCat.value.look == value) return;
+      // A locked cat's look can't be chosen; snap back to the selected cat.
+      if (!selectedCat.select(CatProfiles.forLook(value))) value = selectedCat.value.look;
+    });
   }
 
-  void select(CatLook look) {
-    if (look == value) return;
-    value = look;
-    SharedPreferences.getInstance().then((prefs) => prefs.setString(_key, look.name)).catchError((_) => false);
-  }
+  void select(CatLook look) => value = look;
 }

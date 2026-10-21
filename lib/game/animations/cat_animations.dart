@@ -72,6 +72,38 @@ class CatFrame {
   /// Small rotation (radians) of the far ear for a gentle twitch.
   final double earTwitch;
 
+  CatFrame copyWith({
+    double? earTwitch,
+    double? eyeScale,
+    bool? happyEyes,
+    CatMouth? mouth,
+    bool? motionMarks,
+    double? sparkle,
+    CatMark? mark,
+  }) =>
+      CatFrame(
+        breath: breath,
+        bodyLift: bodyLift,
+        bodyRotation: bodyRotation,
+        headOffset: headOffset,
+        headTilt: headTilt,
+        feet: feet,
+        raisedPaw: raisedPaw,
+        tailAngle: tailAngle,
+        eyeOpen: eyeOpen,
+        eyeScale: eyeScale ?? this.eyeScale,
+        happyEyes: happyEyes ?? this.happyEyes,
+        mouth: mouth ?? this.mouth,
+        gaze: gaze,
+        gazeY: gazeY,
+        motionMarks: motionMarks ?? this.motionMarks,
+        eatMarks: eatMarks,
+        sparkle: sparkle ?? this.sparkle,
+        mark: mark ?? this.mark,
+        shadow: shadow,
+        earTwitch: earTwitch ?? this.earTwitch,
+      );
+
   /// The same frame with a different mark above the head.
   CatFrame withMark(CatMark value) => CatFrame(
         breath: breath,

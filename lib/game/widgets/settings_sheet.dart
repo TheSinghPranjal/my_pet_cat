@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../controllers/cat_game_controller.dart';
+import '../save/game_store.dart';
 import '../sketch/sketch.dart';
 
 /// Small notebook-style settings card.
@@ -37,7 +38,10 @@ class _SettingsSheetState extends State<SettingsSheet> {
                 Switch(
                   value: widget.controller.wanderEnabled,
                   activeTrackColor: SketchColors.ink,
-                  onChanged: (value) => setState(() => widget.controller.wanderEnabled = value),
+                  onChanged: (value) {
+                    setState(() => widget.controller.wanderEnabled = value);
+                    GameStore.instance.update((save) => save.settings.wander = value);
+                  },
                 ),
               ],
             ),
