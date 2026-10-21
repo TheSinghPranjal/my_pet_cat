@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_title">My Pet Cat</string>
+    <string name="widget_greeting">Come play with me!</string>
+    <string name="widget_status">Ready to play</string>
+    <string name="widget_tap">Tap to Play</string>
+    <string name="widget_tap_short">Tap to play ▸</string>
+    <string name="widget_small_label">My Pet Cat · small</string>
+    <string name="widget_medium_label">My Pet Cat · medium</string>
+    <string name="widget_large_label">My Pet Cat · large</string>
+    <string name="widget_small_description">Your kitten, one tap from play.</string>
+    <string name="widget_medium_description">Your kitten and her wool ball. Tap to play.</string>
+    <string name="widget_large_description">Kitty\'s cozy corner. Tap to play.</string>
+    <string name="widget_content_description_default">My Pet Cat. Come play with me! Tap to play.</string>
+    <string name="widget_content_description">My Pet Cat. %1$s Tap to play.</string>
+</resources>

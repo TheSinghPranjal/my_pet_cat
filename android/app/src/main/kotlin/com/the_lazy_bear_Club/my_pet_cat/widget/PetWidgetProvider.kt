@@ -1,0 +1,96 @@
+package com.the_lazy_bear_Club.my_pet_cat.widget
+
+import android.app.PendingIntent
+import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.widget.RemoteViews
+import com.the_lazy_bear_Club.my_pet_cat.MainActivity
+import com.the_lazy_bear_Club.my_pet_cat.R
+
+/**
+ * Home-screen widget. The kitten's poses are a ViewFlipper that the launcher
+ * cross-fades by itself, so the app never wakes up to animate it. The whole
+ * surface opens the game straight into Home.
+ */
+abstract class PetWidgetProvider : AppWidgetProvider() {
+    protected abstract val layoutId: Int
+    protected open val hasGreeting = false
+
+    override fun onUpdate(context: Context, manager: AppWidgetManager, appWidgetIds: IntArray) {
+        for (id in appWidgetIds) manager.updateAppWidget(id, buildViews(context))
+    }
+
+    private fun buildViews(context: Context): RemoteViews {
+        val state = PetWidgetStore.read(context)
+        val greeting = state.greeting(context)
+        return RemoteViews(context.packageName, layoutId).apply {
+            setOnClickPendingIntent(R.id.widget_root, launchIntent(context))
+            setDisplayedChild(R.id.kitten_flipper, if (state.pose == "happy") HAPPY_FRAME else 0)
+            if (hasGreeting) setTextViewText(R.id.widget_greeting, greeting)
+            setContentDescription(R.id.widget_root, context.getString(R.string.widget_content_description, greeting))
+        }
+    }
+
+    companion object {
+        /** Must match AppLaunchRouter.widgetLink in Dart. */
+        const val WIDGET_URI = "mypetcat://game/home?source=widget"
+
+        /** Index of the happy pose in layout/pet_widget_kitten.xml. */
+        private const val HAPPY_FRAME = 5
+
+        private val providers = listOf(
+            SmallPetWidget::class.java,
+            MediumPetWidget::class.java,
+            LargePetWidget::class.java,
+        )
+
+        fun launchIntent(context: Context): PendingIntent {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(WIDGET_URI), context, MainActivity::class.java)
+                .addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP,
+                )
+            return PendingIntent.getActivity(
+                context, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+        }
+
+        /** Re-renders every placed widget; called when the app shares new data. */
+        fun updateAll(context: Context) {
+            val manager = AppWidgetManager.getInstance(context)
+            for (cls in providers) {
+                val ids = manager.getAppWidgetIds(ComponentName(context, cls))
+                if (ids.isNotEmpty()) cls.getDeclaredConstructor().newInstance().onUpdate(context, manager, ids)
+            }
+        }
+
+        fun componentFor(context: Context, size: String): ComponentName = ComponentName(
+            context,
+            when (size) {
+                "small" -> SmallPetWidget::class.java
+                "large" -> LargePetWidget::class.java
+                else -> MediumPetWidget::class.java
+            },
+        )
+    }
+}
+
+class SmallPetWidget : PetWidgetProvider() {
+    override val layoutId = R.layout.pet_widget_small
+}
+
+class MediumPetWidget : PetWidgetProvider() {
+    override val layoutId = R.layout.pet_widget_medium
+    override val hasGreeting = true
+}
+
+class LargePetWidget : PetWidgetProvider() {
+    override val layoutId = R.layout.pet_widget_large
+    override val hasGreeting = true
+}

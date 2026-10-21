@@ -1,0 +1,3 @@
+// Shares the app's version numbers (FLUTTER_BUILD_NAME / NUMBER) so the
+// extension's version always matches the app's, as App Store validation needs.
+#include "../Flutter/Generated.xcconfig"

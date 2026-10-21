@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Notebook paper card with a blue-ink border. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/notebook_paper" />
+    <stroke android:width="2dp" android:color="@color/widget_ink" />
+    <corners android:radius="16dp" />
+</shape>
