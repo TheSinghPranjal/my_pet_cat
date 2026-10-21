@@ -25,7 +25,7 @@ class LocationNavigation extends StatelessWidget {
     return CustomPaint(
       painter: const SketchFramePainter(radius: 0.45, seed: 7),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+        padding: const EdgeInsets.fromLTRB(12, 5, 12, 6),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -36,9 +36,29 @@ class LocationNavigation extends StatelessWidget {
                   selected: location == selected,
                   semanticLabel: 'Go to ${Locations.of(location).title}',
                   onPressed: () => onSelected(location),
-                  child: CustomPaint(
-                    painter: _NavIconPainter(location, selected: location == selected),
-                    child: const SizedBox.expand(),
+                  child: LayoutBuilder(
+                    builder: (context, box) => Column(
+                      children: [
+                        Expanded(
+                          child: CustomPaint(
+                            painter: _NavIconPainter(location, selected: location == selected),
+                            child: const SizedBox.expand(),
+                          ),
+                        ),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            Locations.of(location).title,
+                            style: TextStyle(
+                              color: location == selected ? SketchColors.ink : SketchColors.inkSoft,
+                              fontSize: box.maxHeight * 0.22,
+                              fontWeight: location == selected ? FontWeight.w800 : FontWeight.w600,
+                              height: 1.0,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -64,7 +84,10 @@ class _NavIconPainter extends CustomPainter {
     final pen = SketchPen(canvas, pxPerUnit: k);
     canvas.scale(k);
     if (selected) {
-      // A quick hand-drawn circle around the current location.
+      // Pale-blue disc with a quick hand-drawn circle around it.
+      final disc = ovalPath(const Offset(20, 20), 37, 37);
+      pen.fill(disc, SketchColors.inkWash.withValues(alpha: 0.55));
+      pen.hatch(disc, SketchColors.inkSoft.withValues(alpha: 0.5), spacing: 2.2, seed: 8);
       pen.stroke(
         // Skia wraps sweeps over 360 degrees, so the overlap is a second arc.
         Path()

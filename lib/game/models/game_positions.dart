@@ -16,8 +16,8 @@ abstract final class SceneMetrics {
 
   /// Top of the control panel (action buttons and navigation).
   static const controlsTop = 0.815;
-  static const actionRowY = 0.865;
-  static const navBarY = 0.953;
+  static const actionRowY = 0.858;
+  static const navBarY = 0.952;
 }
 
 abstract final class HomePositions {
@@ -37,17 +37,23 @@ abstract final class HomePositions {
   static const yarnWaypoints = [Offset(0.75, 0.755), Offset(0.635, 0.755)];
   static const yarnEndPosition = Offset(0.70, 0.755);
 
-  // Catch mice. The mouse pops out of the hole in the wall and darts back in.
-  static const mouseHolePosition = Offset(0.30, SceneMetrics.groundLine);
-  static const mouseSpawnPosition = Offset(0.33, 0.672);
-  static const catMouseApproachPosition = Offset(0.64, 0.725);
-  static const mouseWaypointA = Offset(0.43, 0.745);
-  static const mouseWaypointB = Offset(0.31, 0.772);
-  static const mouseWaypointC = Offset(0.42, 0.775);
-  static const catMousePursuitPositions = [Offset(0.60, 0.73), Offset(0.57, 0.735)];
-  static const catMousePounceTarget = Offset(0.48, 0.745);
-  static const mouseFinalPosition = Offset(0.30, 0.636);
+  // Catch mice. The mouse pops out of the hole beside the sofa and darts
+  // back in.
+  static const mouseHolePosition = Offset(0.675, SceneMetrics.groundLine);
+  static const mouseSpawnPosition = Offset(0.645, 0.672);
+  static const catMouseApproachPosition = Offset(0.34, 0.725);
+  static const mouseWaypointA = Offset(0.55, 0.745);
+  static const mouseWaypointB = Offset(0.66, 0.772);
+  static const mouseWaypointC = Offset(0.57, 0.775);
+  static const catMousePursuitPositions = [Offset(0.38, 0.73), Offset(0.41, 0.735)];
+  static const catMousePounceTarget = Offset(0.50, 0.745);
+  static const mouseFinalPosition = Offset(0.675, 0.636);
   static const catMouseReturnPosition = idlePositionB;
+
+  // Resting props: part of the room, hidden while their activity runs.
+  static const restingBowlPosition = Offset(0.12, 0.775);
+  static const restingYarnPosition = Offset(0.86, 0.787);
+  static const toyMousePosition = Offset(0.885, 0.712);
 }
 
 abstract final class BathPositions {
@@ -137,8 +143,9 @@ abstract final class GameSizes {
   static const towel = 0.21;
   static const tub = 0.42;
   static const actionButtonWidth = 0.29;
-  static const actionButtonHeight = 0.15;
-  static const navBarHeight = 0.12;
+  static const actionButtonHeight = 0.14;
+  static const navBarHeight = 0.145;
+  static const navBarWidth = 0.88;
   static const cornerButton = 0.11;
 
   /// Ball radius in normalized stage-width units, used to derive spin from

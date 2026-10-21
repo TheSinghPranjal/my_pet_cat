@@ -173,7 +173,13 @@ class CatPainter extends CustomPainter {
     canvas.translate(-pivot.dx, -pivot.dy);
 
     _ear(pen, [hc + const Offset(-17, -8), hc + const Offset(-15, -26), hc + const Offset(-4, -17)], 31);
+    canvas.save();
+    final earBase = hc + const Offset(10, -12);
+    canvas.translate(earBase.dx, earBase.dy);
+    canvas.rotate(frame.earTwitch);
+    canvas.translate(-earBase.dx, -earBase.dy);
     _ear(pen, [hc + const Offset(4, -17), hc + const Offset(15, -26), hc + const Offset(17, -8)], 32);
+    canvas.restore();
 
     final head = Path()
       ..moveTo(hc.dx, hc.dy - 17)

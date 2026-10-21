@@ -32,6 +32,7 @@ class CatFrame {
     this.sparkle = 0,
     this.mark = CatMark.none,
     this.shadow = true,
+    this.earTwitch = 0,
   });
 
   static const _still = [Offset.zero, Offset.zero, Offset.zero, Offset.zero];
@@ -67,6 +68,9 @@ class CatFrame {
   final double sparkle;
   final CatMark mark;
   final bool shadow;
+
+  /// Small rotation (radians) of the far ear for a gentle twitch.
+  final double earTwitch;
 }
 
 /// Resting spot of the near front paw, matching the painter's leg layout.
@@ -100,10 +104,13 @@ CatFrame catFrameFor({
   final flickT = time % 5.5;
   final flick = flickT < 0.6 ? math.sin(flickT / 0.6 * math.pi * 2) * 0.35 : 0.0;
   final tail = math.sin(time * 1.7) * 0.12 + flick;
+  final earT = time % 4.6;
+  final ear = earT < 0.35 ? math.sin(earT / 0.35 * math.pi * 2) * 0.18 : 0.0;
 
   switch (pose) {
     case CatPose.idle:
       return CatFrame(
+        earTwitch: ear,
         breath: breath,
         bodyLift: -lift,
         headTilt: math.sin(time * 0.7) * 0.03,
@@ -188,6 +195,7 @@ CatFrame catFrameFor({
 
     case CatPose.crouch:
       return CatFrame(
+        earTwitch: ear,
         breath: breath,
         bodyLift: 4,
         feet: _tucked(4),
@@ -233,6 +241,7 @@ CatFrame catFrameFor({
 
     case CatPose.sit:
       return CatFrame(
+        earTwitch: ear,
         breath: breath,
         bodyLift: 5,
         feet: _sitFeet,
@@ -246,6 +255,7 @@ CatFrame catFrameFor({
 
     case CatPose.relax:
       return CatFrame(
+        earTwitch: ear,
         breath: 1 + 0.03 * math.sin(time * 1.8),
         bodyLift: 5,
         feet: _sitFeet,
@@ -283,6 +293,7 @@ CatFrame catFrameFor({
 
     case CatPose.lookUp:
       return CatFrame(
+        earTwitch: ear,
         breath: breath,
         headOffset: const Offset(0, -1),
         headTilt: -0.22,

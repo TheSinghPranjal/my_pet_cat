@@ -3,6 +3,16 @@
 A hand-drawn notebook-doodle virtual kitten, built with Flutter only (no game
 engine, no extra packages, fully offline).
 
+## Screens
+
+1. **Splash**: the kitten hops happily while the title fades in, then the
+   start screen fades in after 2.4 s (tap to skip). The Android launch theme
+   uses the same paper color, so there's no white flash.
+2. **Start screen**: the title, the kitten on her rug, and **Play** and
+   **How to Play**.
+3. **How to Play**: five illustrated tips and a "Got it!" button.
+4. **Game**: the back arrow (top-left) returns to the start screen.
+
 ## Locations and activities
 
 Switch locations with the bottom navigation bar (a 340 ms fade).
@@ -14,7 +24,12 @@ Navigation and all action buttons are disabled while an activity runs.
 | **Play**: wool ball rolls a fixed path, swipes | **Brush Fur**: brush strokes along the back, sparkles | **Climb Tree**: trunk, low branch, high branch, look around, climb down |
 | **Catch Mice**: mouse sniffs, scurries A→B→C, pounce, escapes into its hole | **Towel Dry**: towel rubs, shake, droplets | **Butterflies**: butterfly loops, two swats, flutters away |
 
-Settings (top-right) toggles idle wandering.
+The Home room has a sofa, a round rug on a wooden floor, a window, a portrait,
+a shelf, drawers, plants, a cat tree and a mouse hole. It also has a resting
+food bowl, wool ball and wind-up toy mouse. The bowl and ball fade out while
+their own activity shows the animated version, so there are never two of them.
+A small greeting sits at the top. Settings (top-right) toggles idle wandering.
+Buttons give a light haptic tick when tapped.
 
 ## Art
 
@@ -40,6 +55,7 @@ sequences don't change:
 ```
 lib/game/
   cat_game_screen.dart          layers: paper, scene (background + playfield), controls
+lib/screens/                    splash, start, how-to-play, fade route, title
   controllers/
     cat_game_controller.dart    the single state machine, game clock, shared steps
     home_activities.dart        Feed, Play, Catch Mice

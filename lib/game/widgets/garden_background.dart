@@ -15,10 +15,10 @@ class GardenPainter extends SceneBackgroundPainter {
     Offset at(double x, double y) => Offset(x * w, y * h);
     final groundY = h * SceneMetrics.groundLine;
 
-    cloud(pen, at(0.30, 0.10), 1.3, 60);
+    cloud(pen, at(0.34, 0.135), 1.3, 60);
     cloud(pen, at(0.55, 0.19), 1.0, 61);
     sun(pen, at(0.72, 0.12), 4.5, 62);
-    for (final (x, y, s) in const [(0.46, 0.075, 1.0), (0.52, 0.058, 0.8), (0.88, 0.23, 0.9)]) {
+    for (final (x, y, s) in const [(0.50, 0.17, 1.0), (0.56, 0.155, 0.8), (0.88, 0.23, 0.9)]) {
       final o = at(x, y);
       pen.stroke(
         Path()

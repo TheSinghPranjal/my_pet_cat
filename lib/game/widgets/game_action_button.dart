@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import '../sketch/sketch.dart';
@@ -46,7 +47,12 @@ class _SketchPressableState extends State<SketchPressable> {
         onTapDown: enabled ? (_) => _setPressed(true) : null,
         onTapUp: enabled ? (_) => _setPressed(false) : null,
         onTapCancel: () => _setPressed(false),
-        onTap: enabled ? widget.onPressed : null,
+        onTap: enabled
+            ? () {
+                HapticFeedback.selectionClick();
+                widget.onPressed();
+              }
+            : null,
         child: AnimatedScale(
           scale: _pressed ? 0.92 : 1,
           duration: const Duration(milliseconds: 90),
@@ -63,7 +69,15 @@ class _SketchPressableState extends State<SketchPressable> {
 
 /// Hand-drawn rounded paper card with a doubled blue ink border.
 class SketchFramePainter extends CustomPainter {
-  const SketchFramePainter({this.radius = 0.36, this.seed = 1, this.emphasis = false});
+  const SketchFramePainter({
+    this.radius = 0.36,
+    this.seed = 1,
+    this.emphasis = false,
+    this.fill = SketchColors.white,
+  });
+
+  /// Paper color inside the frame.
+  final Color fill;
 
   /// Corner radius as a fraction of the height.
   final double radius;
@@ -79,7 +93,7 @@ class SketchFramePainter extends CustomPainter {
     final rect = (Offset.zero & size).deflate(k * 1.5);
     final r = Radius.circular(size.height * radius);
     final frame = Path()..addRRect(RRect.fromRectAndRadius(rect, r));
-    pen.fill(frame, SketchColors.white);
+    pen.fill(frame, fill);
     pen.stroke(frame, SketchColors.ink, width: k * 1.3, wobble: k * 0.5, seed: seed);
     pen.stroke(
       Path()..addRRect(RRect.fromRectAndRadius(rect.deflate(k * 2.2), Radius.circular(size.height * radius * 0.85))),
@@ -101,7 +115,10 @@ class SketchFramePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(SketchFramePainter oldDelegate) =>
-      oldDelegate.radius != radius || oldDelegate.seed != seed || oldDelegate.emphasis != emphasis;
+      oldDelegate.radius != radius ||
+      oldDelegate.seed != seed ||
+      oldDelegate.emphasis != emphasis ||
+      oldDelegate.fill != fill;
 }
 
 /// Large contextual action button: drawn icon with a small label.
@@ -136,17 +153,20 @@ class GameActionButton extends StatelessWidget {
             child: Column(
               children: [
                 Expanded(child: Center(child: icon)),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
-                  softWrap: false,
-                  style: TextStyle(
-                    color: SketchColors.ink,
-                    fontSize: box.maxHeight * 0.17,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.2,
-                    height: 1.1,
+                SizedBox(height: box.maxHeight * 0.03),
+                // Scales down rather than clipping on narrow screens.
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: SketchColors.ink,
+                      fontSize: box.maxHeight * 0.2,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.2,
+                      height: 1.1,
+                    ),
                   ),
                 ),
               ],
@@ -158,33 +178,62 @@ class GameActionButton extends StatelessWidget {
   }
 }
 
-/// Small round settings button.
-class SketchSettingsButton extends StatelessWidget {
-  const SketchSettingsButton({super.key, required this.onPressed});
+enum SketchGlyph { settings, back }
 
+/// Small rounded-square icon button (settings gear or back arrow).
+class SketchIconButton extends StatelessWidget {
+  const SketchIconButton({
+    super.key,
+    required this.glyph,
+    required this.onPressed,
+    required this.semanticLabel,
+  });
+
+  final SketchGlyph glyph;
   final VoidCallback onPressed;
+  final String semanticLabel;
 
   @override
   Widget build(BuildContext context) {
     return SketchPressable(
       enabled: true,
       onPressed: onPressed,
-      semanticLabel: 'Settings',
-      child: CustomPaint(painter: _GearPainter(), child: const SizedBox.expand()),
+      semanticLabel: semanticLabel,
+      child: CustomPaint(painter: SketchGlyphPainter(glyph), child: const SizedBox.expand()),
     );
   }
 }
 
-class _GearPainter extends CustomPainter {
+class SketchGlyphPainter extends CustomPainter {
+  const SketchGlyphPainter(this.glyph, {this.framed = true});
+
+  final SketchGlyph glyph;
+
+  /// Draws the rounded paper card behind the glyph.
+  final bool framed;
+
   @override
   void paint(Canvas canvas, Size size) {
-    final k = size.width / 40;
+    final k = math.min(size.width, size.height) / 40;
     final pen = SketchPen(canvas, pxPerUnit: k);
     canvas.save();
+    canvas.translate((size.width - 40 * k) / 2, (size.height - 40 * k) / 2);
     canvas.scale(k);
-    final ring = ovalPath(const Offset(20, 20), 36, 36);
-    pen.fill(ring, SketchColors.white);
-    pen.stroke(ring, SketchColors.ink, width: 1.6, wobble: 0.5, seed: 3);
+    if (framed) {
+      final card = Path()..addRRect(RRect.fromLTRBR(2, 2, 38, 38, const Radius.circular(11)));
+      pen.fill(card, SketchColors.white);
+      pen.stroke(card, SketchColors.ink, width: 1.6, wobble: 0.5, seed: 3);
+    }
+    switch (glyph) {
+      case SketchGlyph.settings:
+        _gear(pen);
+      case SketchGlyph.back:
+        _arrow(pen);
+    }
+    canvas.restore();
+  }
+
+  void _gear(SketchPen pen) {
     final gear = Path();
     for (var i = 0; i < 8; i++) {
       gear.addPath(
@@ -199,9 +248,24 @@ class _GearPainter extends CustomPainter {
     final hole = ovalPath(const Offset(20, 20), 7, 7);
     pen.fill(hole, SketchColors.white);
     pen.stroke(hole, SketchColors.ink, width: 0.9, sketchy: false, wobble: 0.2);
-    canvas.restore();
+  }
+
+  void _arrow(SketchPen pen) {
+    pen.stroke(
+      Path()
+        ..moveTo(28, 20)
+        ..lineTo(12, 20)
+        ..moveTo(19, 12.5)
+        ..lineTo(11.5, 20)
+        ..lineTo(19, 27.5),
+      SketchColors.ink,
+      width: 3,
+      wobble: 0.3,
+      seed: 6,
+    );
   }
 
   @override
-  bool shouldRepaint(_GearPainter oldDelegate) => false;
+  bool shouldRepaint(SketchGlyphPainter oldDelegate) =>
+      oldDelegate.glyph != glyph || oldDelegate.framed != framed;
 }

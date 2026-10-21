@@ -10,6 +10,7 @@ class LocationConfig {
   const LocationConfig({
     required this.location,
     required this.title,
+    required this.greeting,
     required this.idlePositions,
     required this.walkArea,
     required this.activities,
@@ -17,6 +18,9 @@ class LocationConfig {
 
   final GameLocation location;
   final String title;
+
+  /// Small handwritten line shown at the top of the screen.
+  final String greeting;
 
   /// Idle spots A, B and C. B is where the cat starts and returns to.
   final List<Offset> idlePositions;
@@ -47,6 +51,7 @@ abstract final class Locations {
   static const home = LocationConfig(
     location: GameLocation.home,
     title: 'Home',
+    greeting: 'Hello, Kitty!',
     idlePositions: [
       HomePositions.idlePositionA,
       HomePositions.idlePositionB,
@@ -62,7 +67,8 @@ abstract final class Locations {
 
   static const bath = LocationConfig(
     location: GameLocation.bath,
-    title: 'Bathroom',
+    title: 'Bath',
+    greeting: 'Splish, splash!',
     idlePositions: [
       BathPositions.idlePositionA,
       BathPositions.idlePositionB,
@@ -78,7 +84,8 @@ abstract final class Locations {
 
   static const outdoors = LocationConfig(
     location: GameLocation.outdoors,
-    title: 'Garden',
+    title: 'Outdoors',
+    greeting: "Let's explore!",
     idlePositions: [
       OutdoorPositions.idlePositionA,
       OutdoorPositions.idlePositionB,
@@ -88,7 +95,7 @@ abstract final class Locations {
     activities: [
       ActivityDefinition(CatActivity.catchBird, 'Catch Bird', 'Catch bird'),
       ActivityDefinition(CatActivity.climbTree, 'Climb Tree', 'Climb tree'),
-      ActivityDefinition(CatActivity.chaseButterflies, 'Butterflies', 'Chase butterflies'),
+      ActivityDefinition(CatActivity.chaseButterflies, 'Chase Butterflies', 'Chase butterflies'),
     ],
   );
 

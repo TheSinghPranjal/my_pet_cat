@@ -78,6 +78,8 @@ class CatGameController extends ChangeNotifier {
   late Offset _catPosition;
   double _facing = 1;
 
+  CatActivity? _activity;
+
   /// What the cat's eyes follow during an activity.
   SpawnedObject? _focus;
 
@@ -97,6 +99,9 @@ class CatGameController extends ChangeNotifier {
   /// 1 = facing right, -1 = facing left; values between are mid-turn.
   double get facing => _facing;
   CatPose get pose => _pose;
+
+  /// The activity currently running, if any.
+  CatActivity? get activeActivity => _activity;
 
   /// How much foam is in the bathtub (bath scene prop).
   double get tubFoam => _tubFoam;
@@ -150,7 +155,7 @@ class CatGameController extends ChangeNotifier {
       CatActivity.climbTree => (CatGameState.climbingTree, _climbTreeSequence),
       CatActivity.chaseButterflies => (CatGameState.chasingButterflies, _chaseButterfliesSequence),
     };
-    _beginInteraction(first, body);
+    if (_beginInteraction(first, body)) _activity = activity;
   }
 
   void feed() => startActivity(CatActivity.feed);
@@ -188,12 +193,14 @@ class CatGameController extends ChangeNotifier {
   // Sequencing
   // ---------------------------------------------------------------------------
 
-  void _beginInteraction(CatGameState first, Future<bool> Function() body) {
-    if (_disposed || isBusy) return;
+  /// Returns false when the request was ignored.
+  bool _beginInteraction(CatGameState first, Future<bool> Function() body) {
+    if (_disposed || isBusy) return false;
     final s = _newSession();
     _clearTransient();
     _setState(first);
     unawaited(_runInteraction(s, body));
+    return true;
   }
 
   Future<void> _runInteraction(int s, Future<bool> Function() body) async {
@@ -208,6 +215,7 @@ class CatGameController extends ChangeNotifier {
         // cat back on safe ground so it can never be stranded (e.g. in a tree).
         _clearTransient();
         if (!finished) _catPosition = locationConfig.startPosition;
+        _activity = null;
         _setState(CatGameState.idle);
       }
     }

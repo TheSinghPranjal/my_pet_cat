@@ -15,49 +15,121 @@ class HomeRoomPainter extends SceneBackgroundPainter {
     void place(double x, double y, void Function() draw) =>
         SceneBackgroundPainter.place(canvas, Offset(x * w, y * h), draw);
 
-    ground(pen, w, h, shade: SketchColors.inkSoft, line: SketchColors.ink);
-    place(HomePositions.mouseHolePosition.dx, HomePositions.mouseHolePosition.dy,
-        () => _mouseHole(pen));
-    // The lamp hangs a little higher than its cord length so it clears the
-    // window rod.
-    place(0.55, 0, () {
-      canvas.translate(0, -5);
-      _lamp(pen);
-    });
+    _woodFloor(pen, w, h);
+    place(0.5, 0.74, () => _rug(pen));
     place(0.03, 0.11, () => _window(pen));
     place(0.60, 0.165, () => _picture(pen));
     place(0.80, 0.185, () => _shelf(pen));
     place(0, 0.525, () => _dresser(pen));
     place(0, 0.37, () => _pottedPlant(pen));
     place(0.72, 0.39, () => _catTree(pen));
-    place(-0.01, 0.685, () => _bed(pen));
+    place(0.25, 0.50, () => _sofa(pen, (SceneMetrics.groundLine - 0.50) * h));
+    place(HomePositions.mouseHolePosition.dx, HomePositions.mouseHolePosition.dy,
+        () => _mouseHole(pen));
   }
 
-  // --- Lamp -----------------------------------------------------------------
+  // --- Floor and rug ---------------------------------------------------------
 
-  void _lamp(SketchPen pen) {
-    pen.line(Offset.zero, const Offset(0, 13.5), SketchColors.ink, width: 0.8);
-    final shade = Path()
-      ..moveTo(-2.2, 13.5)
-      ..lineTo(2.2, 13.5)
-      ..quadraticBezierTo(3, 18, 8, 21.5)
-      ..lineTo(-8, 21.5)
-      ..quadraticBezierTo(-3, 18, -2.2, 13.5)
-      ..close();
-    pen.fill(shade, SketchColors.white);
-    pen.hatch(shade, SketchColors.inkSoft, spacing: 1.2, angle: -0.5, seed: 3);
-    pen.stroke(shade, SketchColors.ink, width: 0.9, seed: 3);
-    pen.stroke(ovalPath(const Offset(0, 21.5), 16, 2.2), SketchColors.ink, width: 0.8, seed: 4);
-    final bulb = ovalPath(const Offset(0, 23.6), 5, 4.4);
-    pen.fill(bulb, SketchColors.sun);
-    pen.hatch(bulb, SketchColors.sunEdge, spacing: 0.8, seed: 5);
-    pen.stroke(bulb, SketchColors.sunEdge, width: 0.6, seed: 5);
-    for (final a in const [2.45, 2.0, 1.15, 0.7]) {
-      final d = Offset(math.cos(a), math.sin(a));
-      pen.line(const Offset(0, 23.6) + d * 4.6, const Offset(0, 23.6) + d * 7.2,
-          SketchColors.sun, width: 0.8, sketchy: false);
+  void _woodFloor(SketchPen pen, double w, double h) {
+    final top = h * SceneMetrics.groundLine;
+    final bottom = h * SceneMetrics.groundBottom;
+    final floor = Path()
+      ..moveTo(-1, top)
+      ..lineTo(w + 1, top)
+      ..lineTo(w + 1, bottom - 2);
+    // Ragged pencil edge where the shading stops.
+    for (var x = w; x > -2; x -= 6) {
+      floor.lineTo(x - 3, bottom + (x.toInt() % 3) * 0.8);
+    }
+    floor.close();
+    pen.fill(floor, SketchColors.woodLight.withValues(alpha: 0.7));
+    pen.hatch(floor, SketchColors.wood.withValues(alpha: 0.35), spacing: 1.6, angle: -0.08, seed: 120);
+    final planks = Paint()
+      ..color = SketchColors.wood.withValues(alpha: 0.6)
+      ..strokeWidth = 0.45;
+    final rnd = math.Random(121);
+    var row = 0;
+    for (var y = top + 5; y < bottom - 1; y += 5.5, row++) {
+      pen.canvas.drawLine(Offset(0, y), Offset(w, y), planks);
+      for (var x = (row.isEven ? 6.0 : 15.0) + rnd.nextDouble() * 4; x < w; x += 22 + rnd.nextDouble() * 6) {
+        pen.canvas.drawLine(Offset(x, y - 5.5), Offset(x, y), planks);
+      }
+    }
+    pen.line(Offset(-2, top), Offset(w + 2, top), SketchColors.ink, width: 1.0, wobble: 0.35, seed: 1);
+    pen.line(Offset(-2, top + 0.9), Offset(w + 2, top + 0.9), SketchColors.wood,
+        width: 0.5, wobble: 0.4, seed: 2, sketchy: false);
+  }
+
+  void _rug(SketchPen pen) {
+    final outer = ovalPath(Offset.zero, 64, 13);
+    final middle = ovalPath(Offset.zero, 54, 10);
+    final inner = ovalPath(Offset.zero, 40, 7);
+    pen.fill(outer, SketchColors.coralLight);
+    pen.hatch(Path.combine(PathOperation.difference, outer, middle), SketchColors.coral,
+        spacing: 0.9, angle: -0.5, seed: 122);
+    pen.fill(middle, SketchColors.paper);
+    pen.hatch(Path.combine(PathOperation.difference, middle, inner), SketchColors.sun,
+        spacing: 1.1, angle: 0.6, seed: 123);
+    pen.fill(inner, SketchColors.inkWash.withValues(alpha: 0.6));
+    pen.hatch(inner, SketchColors.inkSoft, spacing: 1.2, seed: 124, cross: true);
+    pen.stroke(outer, SketchColors.coral, width: 0.9, seed: 125);
+    pen.stroke(middle, SketchColors.coral.withValues(alpha: 0.7), width: 0.5, seed: 126, sketchy: false);
+    pen.stroke(inner, SketchColors.ink.withValues(alpha: 0.7), width: 0.5, seed: 127, sketchy: false);
+    // Fringe.
+    for (final side in const [-1.0, 1.0]) {
+      for (var dy = -2.5; dy <= 2.6; dy += 1.25) {
+        pen.line(Offset(31.5 * side, dy), Offset(34 * side, dy), SketchColors.coral,
+            width: 0.4, sketchy: false, wobble: 0);
+      }
     }
   }
+
+  // --- Sofa -------------------------------------------------------------------
+
+  void _sofa(SketchPen pen, double toGround) {
+    for (final x in const [4.0, 34.0]) {
+      final leg = rectPath(x, toGround - 3, x + 2, toGround);
+      pen.fill(leg, SketchColors.wood);
+      pen.stroke(leg, SketchColors.ink, width: 0.5, sketchy: false, wobble: 0.1);
+    }
+    final back = Path()..addRRect(RRect.fromLTRBR(2, 0, 38, 13, const Radius.circular(4)));
+    pen.fill(back, SketchColors.coralLight);
+    pen.hatch(back, SketchColors.coral, spacing: 1.1, angle: -1.0, seed: 130);
+    pen.stroke(back, SketchColors.ink, width: 0.9, seed: 130);
+    final base = rectPath(1, toGround - 6, 39, toGround - 3);
+    pen.fill(base, SketchColors.coralLight);
+    pen.hatch(base, SketchColors.coral, spacing: 0.8, seed: 131, cross: true);
+    pen.stroke(base, SketchColors.ink, width: 0.8, seed: 131);
+    for (final (i, x) in const [5.0, 20.0].indexed) {
+      final cushion = Path()
+        ..addRRect(RRect.fromLTRBR(x, 11, x + 15, toGround - 5.5, const Radius.circular(2.5)));
+      pen.fill(cushion, SketchColors.white);
+      pen.hatch(cushion, SketchColors.coral.withValues(alpha: 0.7), spacing: 1.3, angle: 0.3, seed: 132 + i);
+      pen.stroke(cushion, SketchColors.ink, width: 0.8, seed: 132 + i);
+    }
+    for (final (i, x) in const [-1.5, 34.0].indexed) {
+      final arm = Path()..addRRect(RRect.fromLTRBR(x, 6.5, x + 7.5, toGround - 4, const Radius.circular(3)));
+      pen.fill(arm, SketchColors.coralLight);
+      pen.hatch(arm, SketchColors.coral, spacing: 0.9, angle: -0.7, seed: 134 + i);
+      pen.stroke(arm, SketchColors.ink, width: 0.9, seed: 134 + i);
+    }
+    // Throw pillows: yellow and soft blue.
+    for (final (i, (c, color, edge)) in const [
+      (Offset(10, 7.5), SketchColors.sun, SketchColors.sunEdge),
+      (Offset(30, 7.5), SketchColors.inkWash, SketchColors.ink),
+    ].indexed) {
+      final canvas = pen.canvas;
+      canvas.save();
+      canvas.translate(c.dx, c.dy);
+      canvas.rotate(i.isEven ? -0.2 : 0.2);
+      final pillow = Path()..addRRect(RRect.fromLTRBR(-4, -3.6, 4, 3.6, const Radius.circular(1.6)));
+      pen.fill(pillow, color.withValues(alpha: 0.8));
+      pen.hatch(pillow, edge, spacing: 0.8, seed: 136 + i);
+      pen.stroke(pillow, edge, width: 0.7, seed: 136 + i);
+      canvas.restore();
+    }
+  }
+
 
   // --- Window ---------------------------------------------------------------
 
@@ -368,42 +440,7 @@ class HomeRoomPainter extends SceneBackgroundPainter {
     pen.stroke(box, SketchColors.ink, width: 1.0, seed: 107);
   }
 
-  // --- Cat bed --------------------------------------------------------------
-
-  void _bed(SketchPen pen) {
-    pen.hatch(ovalPath(const Offset(12, 14), 26, 2.6), SketchColors.inkSoft,
-        spacing: 0.9, angle: -0.15, seed: 110);
-    final outer = Path()
-      ..addRRect(RRect.fromLTRBR(0, 3, 23, 13.5, const Radius.circular(5.5)));
-    pen.fill(outer, SketchColors.pink.withValues(alpha: 0.3));
-    pen.hatch(outer, SketchColors.pink, spacing: 0.9, angle: -0.6, seed: 111);
-    pen.stroke(outer, SketchColors.pinkDeep, width: 0.9, seed: 111);
-    for (final x in const [6.5, 12.0, 17.5]) {
-      pen.stroke(
-        Path()
-          ..moveTo(x, 7.5)
-          ..quadraticBezierTo(x - 1.2, 10.5, x, 13.2),
-        SketchColors.pinkDeep.withValues(alpha: 0.6),
-        width: 0.5,
-        sketchy: false,
-      );
-    }
-    final cushion = ovalPath(const Offset(11.5, 4.3), 20, 7.6);
-    pen.fill(cushion, const Color(0xFFFCE6EC));
-    pen.hatch(cushion, SketchColors.pink, spacing: 1.1, angle: 0.4, seed: 112);
-    pen.stroke(cushion, SketchColors.pinkDeep, width: 0.8, seed: 112);
-    final hollow = ovalPath(const Offset(11.5, 4.3), 13.5, 4);
-    pen.fill(hollow, SketchColors.pink.withValues(alpha: 0.5));
-    pen.hatch(hollow, SketchColors.pinkDeep, spacing: 0.8, seed: 113);
-    pen.stroke(hollow, SketchColors.pinkDeep, width: 0.6, seed: 113);
-    // Paw print.
-    pen.fill(ovalPath(const Offset(16, 10.6), 2.4, 1.8), SketchColors.ink);
-    for (final toe in const [Offset(14.6, 9.0), Offset(15.6, 8.4), Offset(16.6, 8.4), Offset(17.5, 9.0)]) {
-      pen.fill(ovalPath(toe, 0.85, 0.95), SketchColors.ink);
-    }
-  }
-
-  // --- Mouse hole ----------------------------------------------------------
+  // --- Mouse hole -----------------------------------------------------------
 
   void _mouseHole(SketchPen pen) {
     final hole = Path()
@@ -416,5 +453,4 @@ class HomeRoomPainter extends SceneBackgroundPainter {
     pen.hatch(hole, SketchColors.ink, spacing: 0.6, cross: true, seed: 130);
     pen.stroke(hole, SketchColors.ink, width: 0.9, seed: 130);
   }
-
 }

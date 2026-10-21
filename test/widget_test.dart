@@ -7,6 +7,9 @@ import 'package:my_pet_cat/game/models/cat_game_state.dart';
 import 'package:my_pet_cat/game/models/game_location.dart';
 import 'package:my_pet_cat/game/models/game_positions.dart';
 import 'package:my_pet_cat/main.dart';
+import 'package:my_pet_cat/screens/how_to_play_screen.dart';
+import 'package:my_pet_cat/screens/splash_screen.dart';
+import 'package:my_pet_cat/screens/start_screen.dart';
 
 const _frame = Duration(milliseconds: 16);
 
@@ -14,7 +17,7 @@ Future<CatGameController> _launch(WidgetTester tester, {Size size = const Size(1
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 2.7;
   addTearDown(tester.view.reset);
-  await tester.pumpWidget(const MyPetCatApp());
+  await tester.pumpWidget(const MaterialApp(home: CatGameScreen()));
   await tester.pump();
   return tester.state<CatGameScreenState>(find.byType(CatGameScreen)).controller;
 }
@@ -55,11 +58,68 @@ Future<void> _runToEnd(WidgetTester tester, CatGameController c, CatActivity act
 }
 
 void main() {
+  group('app flow', () {
+    Future<void> openApp(WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1080, 1920);
+      tester.view.devicePixelRatio = 2.7;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(const MyPetCatApp());
+      expect(find.byType(SplashScreen), findsOneWidget);
+      await _pumpSeconds(tester, 3);
+      expect(find.byType(SplashScreen), findsNothing);
+      expect(find.byType(StartScreen), findsOneWidget);
+    }
+
+    testWidgets('splash leads to the start screen with Play and How to Play', (tester) async {
+      await openApp(tester);
+      expect(find.bySemanticsLabel('Play'), findsOneWidget);
+      expect(find.bySemanticsLabel('How to play'), findsOneWidget);
+    });
+
+    testWidgets('tapping the splash skips ahead', (tester) async {
+      tester.view.physicalSize = const Size(1080, 1920);
+      tester.view.devicePixelRatio = 2.7;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(const MyPetCatApp());
+      await _pumpSeconds(tester, 0.3);
+      await tester.tapAt(const Offset(200, 300));
+      await _pumpSeconds(tester, 0.5);
+      expect(find.byType(StartScreen), findsOneWidget);
+    });
+
+    testWidgets('How to Play opens tips and Got it returns', (tester) async {
+      await openApp(tester);
+      await tester.tap(find.bySemanticsLabel('How to play'));
+      await _pumpSeconds(tester, 0.5);
+      expect(find.byType(HowToPlayScreen), findsOneWidget);
+      expect(find.text('2. Pick an activity'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Got it'));
+      await _pumpSeconds(tester, 0.5);
+      expect(find.byType(HowToPlayScreen), findsNothing);
+      expect(find.byType(StartScreen), findsOneWidget);
+    });
+
+    testWidgets('Play opens the game and the back button returns', (tester) async {
+      await openApp(tester);
+      await tester.tap(find.bySemanticsLabel('Play'));
+      await _pumpSeconds(tester, 0.5);
+      expect(find.byType(CatGameScreen), findsOneWidget);
+      expect(find.bySemanticsLabel('Feed the cat'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Feed the cat'));
+      await _pumpSeconds(tester, 1);
+      await tester.tap(find.bySemanticsLabel('Back to menu'));
+      await _pumpSeconds(tester, 0.5);
+      expect(find.byType(CatGameScreen), findsNothing);
+      expect(find.byType(StartScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
   testWidgets('launches at home with its three actions and the navigation', (tester) async {
     final c = await _launch(tester);
     expect(c.state, CatGameState.idle);
     expect(c.location, GameLocation.home);
-    for (final label in ['Feed the cat', 'Play with the cat', 'Catch mice', 'Go to Home', 'Go to Bathroom', 'Go to Garden']) {
+    for (final label in ['Feed the cat', 'Play with the cat', 'Catch mice', 'Go to Home', 'Go to Bath', 'Go to Outdoors']) {
       expect(find.bySemanticsLabel(label), findsOneWidget, reason: label);
     }
   });
@@ -75,7 +135,7 @@ void main() {
 
     await tester.tap(find.bySemanticsLabel('Feed the cat'));
     await tester.tap(find.bySemanticsLabel('Play with the cat'));
-    await tester.tap(find.bySemanticsLabel('Go to Garden'));
+    await tester.tap(find.bySemanticsLabel('Go to Outdoors'));
     await tester.pump();
     expect(c.yarn, isNull);
     expect(c.location, GameLocation.home);
@@ -188,7 +248,7 @@ void main() {
   testWidgets('switching location fades and lands on the start spot', (tester) async {
     final c = await _launch(tester);
     await _pumpSeconds(tester, 6);
-    await tester.tap(find.bySemanticsLabel('Go to Bathroom'));
+    await tester.tap(find.bySemanticsLabel('Go to Bath'));
     await tester.pump();
     expect(c.state, CatGameState.changingLocation);
     await _pumpSeconds(tester, 0.1);

@@ -41,8 +41,10 @@ class WoolBall extends StatelessWidget {
 }
 
 class WoolBallPainter extends CustomPainter {
-  WoolBallPainter({this.rotation = 0, this.appear = 1, this.pop = 0});
+  WoolBallPainter({this.rotation = 0, this.appear = 1, this.pop = 0, this.motionMarks = false});
 
+  /// Little "it's rolling" marks, used on the Play button.
+  final bool motionMarks;
   final double rotation;
   final double appear;
   final double pop;
@@ -65,6 +67,19 @@ class WoolBallPainter extends CustomPainter {
       canvas.translate(-_center.dx, -105);
       _ball(pen);
       canvas.restore();
+    }
+    if (motionMarks) {
+      for (final (i, y) in const [38.0, 55.0, 72.0].indexed) {
+        pen.stroke(
+          Path()
+            ..moveTo(6, y)
+            ..quadraticBezierTo(2, y + 5, 6, y + 10),
+          SketchColors.ink,
+          width: 2.6,
+          sketchy: false,
+          seed: i,
+        );
+      }
     }
     pen.popMarks(_center, 62, pop, SketchColors.wool, width: 2.6);
     canvas.restore();
@@ -133,5 +148,8 @@ class WoolBallPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(WoolBallPainter oldDelegate) =>
-      oldDelegate.rotation != rotation || oldDelegate.appear != appear || oldDelegate.pop != pop;
+      oldDelegate.rotation != rotation ||
+      oldDelegate.appear != appear ||
+      oldDelegate.pop != pop ||
+      oldDelegate.motionMarks != motionMarks;
 }

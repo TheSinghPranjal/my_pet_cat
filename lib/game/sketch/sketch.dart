@@ -26,6 +26,10 @@ abstract final class SketchColors {
   static const eye = Color(0xFF1A2246);
   static const iris = Color(0xFF3B5FCC);
   static const white = Color(0xFFFFFFFF);
+  static const coral = Color(0xFFEE7766);
+  static const coralLight = Color(0xFFFBD9D2);
+  static const wood = Color(0xFFC58A4E);
+  static const woodLight = Color(0xFFF3DDBF);
 }
 
 /// Hand-drawn drawing helpers: wobbly doubled ink lines and pencil hatching.

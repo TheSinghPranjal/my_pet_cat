@@ -8,7 +8,17 @@ import '../sketch/sketch.dart';
 /// Little gray mouse (100x60 box, facing right). Sniffs and twitches its ear
 /// while still; scurries while [moving].
 class MousePainter extends CustomPainter {
-  MousePainter({this.phase = 0, this.moving = false, this.facing = 1, this.appear = 1, this.pop = 0});
+  MousePainter({
+    this.phase = 0,
+    this.moving = false,
+    this.facing = 1,
+    this.appear = 1,
+    this.pop = 0,
+    this.toy = false,
+  });
+
+  /// Draws the room's wind-up toy mouse (key on its back, red string tail).
+  final bool toy;
 
   static const aspect = 100 / 60;
 
@@ -43,7 +53,7 @@ class MousePainter extends CustomPainter {
         ..moveTo(18, 46)
         ..cubicTo(4 + run * 3, 48, 0, 36, 8, 32)
         ..quadraticBezierTo(12, 29, 10 - run * 2, 25),
-      SketchColors.pencil,
+      toy ? SketchColors.wool : SketchColors.pencil,
       width: 1.4,
       sketchy: false,
       wobble: 0.3,
@@ -65,6 +75,14 @@ class MousePainter extends CustomPainter {
     pen.fill(body, const Color(0xFFE6E6EA));
     pen.hatch(body, SketchColors.graphite.withValues(alpha: 0.6), spacing: 1.7, seed: 2);
     pen.stroke(body, SketchColors.pencil, width: 1.2, seed: 3);
+    if (toy) {
+      pen.line(const Offset(42, 22), const Offset(42, 14), SketchColors.pencil, width: 1.2, sketchy: false);
+      for (final side in const [-1.0, 1.0]) {
+        final loop = ovalPath(Offset(42 + side * 5, 11), 9, 6);
+        pen.fill(loop, SketchColors.sun);
+        pen.stroke(loop, SketchColors.sunEdge, width: 1.0, sketchy: false, wobble: 0.1);
+      }
+    }
 
     canvas.save();
     canvas.translate(64, 26);
@@ -97,7 +115,12 @@ class MousePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(MousePainter old) =>
-      old.phase != phase || old.moving != moving || old.facing != facing || old.appear != appear || old.pop != pop;
+      old.phase != phase ||
+      old.moving != moving ||
+      old.facing != facing ||
+      old.appear != appear ||
+      old.pop != pop ||
+      old.toy != toy;
 }
 
 /// Tiny blue bird (100x90 box, facing right). Flaps while [airborne].

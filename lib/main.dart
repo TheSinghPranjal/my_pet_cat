@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'game/cat_game_screen.dart';
+import 'screens/splash_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,7 +18,7 @@ class MyPetCatApp extends StatelessWidget {
       title: 'My Pet Cat',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(colorSchemeSeed: const Color(0xFF2236B5)),
-      home: const CatGameScreen(),
+      home: const SplashScreen(),
     );
   }
 }

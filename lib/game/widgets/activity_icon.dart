@@ -18,7 +18,7 @@ class ActivityIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final (double aspect, CustomPainter painter) = switch (activity) {
       CatActivity.feed => (FoodBowl.aspect, FoodBowlPainter()),
-      CatActivity.play => (WoolBall.aspect, WoolBallPainter(rotation: 0.4)),
+      CatActivity.play => (WoolBall.aspect, WoolBallPainter(rotation: 0.4, motionMarks: true)),
       CatActivity.catchMouse => (MousePainter.aspect, MousePainter()),
       CatActivity.bathTime => (BathTubPainter.aspect, BathTubPainter(foam: 1)),
       CatActivity.brushFur => (BrushPainter.aspect, BrushPainter()),

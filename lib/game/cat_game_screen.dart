@@ -3,12 +3,15 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'controllers/cat_game_controller.dart';
+import 'models/activity_definition.dart';
 import 'models/cat_game_state.dart';
 import 'models/game_location.dart';
 import 'models/game_positions.dart';
 import 'sketch/sketch.dart';
 import 'widgets/activity_icon.dart';
 import 'widgets/cat_character.dart';
+import 'widgets/critters.dart';
+import 'widgets/food_bowl.dart';
 import 'widgets/game_action_button.dart';
 import 'widgets/grooming_props.dart';
 import 'widgets/interactive_object.dart';
@@ -16,6 +19,7 @@ import 'widgets/location_navigation.dart';
 import 'widgets/scene_background.dart';
 import 'widgets/scene_effects.dart';
 import 'widgets/settings_sheet.dart';
+import 'widgets/wool_ball.dart';
 
 /// The whole game: paper, static scene, animated playfield, and controls,
 /// each on its own layer.
@@ -115,7 +119,7 @@ class CatGameScreenState extends State<CatGameScreen>
               layout.unit * GameSizes.actionButtonWidth,
               layout.unit * GameSizes.actionButtonHeight,
             );
-            final navSize = Size(layout.unit * 0.8, layout.unit * GameSizes.navBarHeight);
+            final navSize = Size(layout.unit * GameSizes.navBarWidth, layout.unit * GameSizes.navBarHeight);
             Positioned at(Offset center, Size size, Widget child) {
               final c = layout.toPixels(center);
               return Positioned(
@@ -131,10 +135,11 @@ class CatGameScreenState extends State<CatGameScreen>
               clipBehavior: Clip.none,
               children: [
                 Positioned(
-                  left: inset,
+                  left: inset + corner,
+                  right: inset + corner,
                   top: inset,
-                  height: corner * 0.72,
-                  child: _LocationTag(title: config.title),
+                  height: corner,
+                  child: _Greeting(text: config.greeting),
                 ),
                 for (final (i, definition) in config.activities.indexed)
                   at(
@@ -163,39 +168,54 @@ class CatGameScreenState extends State<CatGameScreen>
           },
         ),
       ),
+      // Back to the start page; only shown when the game was opened from it.
+      if (Navigator.of(context).canPop())
+        Positioned(
+          left: inset,
+          top: inset,
+          width: corner,
+          height: corner,
+          child: SketchIconButton(
+            glyph: SketchGlyph.back,
+            semanticLabel: 'Back to menu',
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+        ),
       Positioned(
         right: inset,
         top: inset,
         width: corner,
         height: corner,
-        child: SketchSettingsButton(onPressed: _openSettings),
+        child: SketchIconButton(
+          glyph: SketchGlyph.settings,
+          semanticLabel: 'Settings',
+          onPressed: _openSettings,
+        ),
       ),
     ];
   }
 }
 
-/// Small sketch tag naming the current location.
-class _LocationTag extends StatelessWidget {
-  const _LocationTag({required this.title});
+/// Small handwritten greeting at the top, secondary to the scene.
+class _Greeting extends StatelessWidget {
+  const _Greeting({required this.text});
 
-  final String title;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder: (context, box) => CustomPaint(
-        painter: const SketchFramePainter(radius: 0.5, seed: 11),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: box.maxHeight * 0.55),
-          child: Center(
-            widthFactor: 1,
-            child: Text(
-              title,
-              style: TextStyle(
-                color: SketchColors.ink,
-                fontSize: box.maxHeight * 0.42,
-                fontWeight: FontWeight.w800,
-              ),
+      builder: (context, box) => Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            text,
+            style: TextStyle(
+              color: SketchColors.ink,
+              fontSize: box.maxHeight * 0.34,
+              fontWeight: FontWeight.w700,
+              fontStyle: FontStyle.italic,
+              letterSpacing: 0.4,
             ),
           ),
         ),
@@ -239,6 +259,10 @@ class _Scene extends StatelessWidget {
 class _Playfield extends StatelessWidget {
   const _Playfield({required this.controller, required this.layout});
 
+  static final _restingBowl = FoodBowlPainter();
+  static final _restingYarn = WoolBallPainter(rotation: 1.2);
+  static final _toyMouse = MousePainter(facing: -1, toy: true);
+
   final CatGameController controller;
   final GameLayout layout;
 
@@ -267,6 +291,36 @@ class _Playfield extends StatelessWidget {
             CatCharacter(frame: controller.catFrame, facing: controller.facing, width: catWidth),
           ),
         ));
+
+        if (controller.location == GameLocation.home) {
+          // Resting props belong to the room; the bowl and ball step aside
+          // while their own activity shows the animated version.
+          final active = controller.activeActivity;
+          void rest(Offset at, Size size, double anchorX, CustomPainter painter, {bool hidden = false}) {
+            items.add((
+              at.dy,
+              anchored(
+                at,
+                size,
+                anchorX,
+                AnimatedOpacity(
+                  opacity: hidden ? 0 : 1,
+                  duration: const Duration(milliseconds: 250),
+                  child: RepaintBoundary(child: CustomPaint(size: size, painter: painter)),
+                ),
+              ),
+            ));
+          }
+
+          rest(HomePositions.restingBowlPosition, InteractiveObject.sizeOf(ObjectKind.bowl, layout.unit), 0.5,
+              _restingBowl,
+              hidden: active == CatActivity.feed);
+          rest(HomePositions.restingYarnPosition, InteractiveObject.sizeOf(ObjectKind.yarn, layout.unit),
+              WoolBall.ballCenterX, _restingYarn,
+              hidden: active == CatActivity.play);
+          rest(HomePositions.toyMousePosition, InteractiveObject.sizeOf(ObjectKind.mouse, layout.unit) * 0.85,
+              0.5, _toyMouse);
+        }
 
         if (controller.location == GameLocation.bath) {
           final width = layout.unit * GameSizes.tub;
