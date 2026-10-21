@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Notebook paper, so the native launch screen blends into the Flutter splash. -->
+    <color name="notebook_paper">#FCFBF6</color>
+</resources>
