@@ -2,13 +2,14 @@ import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 
+import '../environments/bedroom/bedroom_props.dart';
 import '../models/game_location.dart';
 import '../sketch/sketch.dart';
 import 'activity_icon.dart';
 import 'game_action_button.dart';
 import 'kitchen_props.dart';
 
-/// Persistent bottom bar for switching between Home, Bath and Garden.
+/// Persistent bottom bar for switching between the places.
 class LocationNavigation extends StatelessWidget {
   const LocationNavigation({
     super.key,
@@ -118,6 +119,8 @@ class _NavIconPainter extends CustomPainter {
         canvas.save();
         canvas.translate(5, 4);
         TreeIconPainter(withSun: true).paint(canvas, const Size(30, 30));
+      case GameLocation.bedroom:
+        BedIconPainter(color: _ink).paint(canvas, const Size(40, 40));
     }
     canvas.restore();
     canvas.restore();

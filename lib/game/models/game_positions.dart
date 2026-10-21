@@ -194,6 +194,44 @@ abstract final class OutdoorPositions {
   static const catButterflyReturnPosition = idlePositionB;
 }
 
+abstract final class BedroomPositions {
+  static const idlePositionA = Offset(0.32, 0.715);
+  static const idlePositionB = Offset(0.48, 0.725);
+  static const idlePositionC = Offset(0.62, 0.715);
+  static const returnPosition = idlePositionB;
+
+  // Furniture: the wardrobe stands on the left, the bed on the right.
+  static const wardrobePosition = Offset(0.165, 0.638);
+  static const pillowPosition = Offset(0.875, 0.578);
+  static const socketPosition = Offset(0.515, 0.6);
+  static const phonePosition = Offset(0.665, 0.692);
+
+  /// Where the cable lies on the floor, and where the cat lifts it to.
+  static const cableRestPoint = Offset(0.59, 0.688);
+  static const cableBitePoint = Offset(0.585, 0.672);
+
+  /// The girl stands by the back wall; scripts move her sideways by
+  /// fractions of the stage width from here.
+  static const girlPosition = Offset(0.44, 0.65);
+  static const girlAtBed = 0.22;
+  static const girlAtWardrobe = -0.09;
+
+  // Wardrobe hide-and-seek.
+  static const catWardrobeFront = Offset(0.27, 0.715);
+  static const catInWardrobe = Offset(0.20, 0.62);
+  static const catWardrobeJumpOut = Offset(0.34, 0.73);
+
+  // Charger cable.
+  static const catChewPosition = Offset(0.535, 0.728);
+
+  // Bed and pillow.
+  static const catBedFoot = Offset(0.60, 0.72);
+  static const catOnBed = Offset(0.68, 0.572);
+  static const catBedMiddle = Offset(0.76, 0.571);
+  static const catOnPillow = Offset(0.86, 0.558);
+  static const catBedJumpDown = Offset(0.70, 0.75);
+}
+
 /// Sprite sizes (widths) as fractions of [GameLayout.unit].
 abstract final class GameSizes {
   static const cat = 0.25;
@@ -209,6 +247,9 @@ abstract final class GameSizes {
   static const treat = 0.065;
   static const fish = 0.11;
   static const plate = 0.15;
+  static const wardrobe = 0.27;
+  static const pillow = 0.14;
+  static const girl = 0.21;
   static const actionButtonWidth = 0.29;
   static const actionButtonHeight = 0.14;
   static const navBarHeight = 0.145;

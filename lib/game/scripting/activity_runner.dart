@@ -204,6 +204,12 @@ class ActivityRunner {
         return animate(seconds, (t) => tween(object, start, t));
       case SceneValue(:final key, :final seconds, :final value):
         return animate(seconds, (t) => scene.values[key] = value(t));
+      case SetValue(:final key, :final value):
+        scene.values[key] = value;
+        return true;
+      case TweenValue(:final key, :final to, :final seconds, :final curve):
+        final from = scene.value(key);
+        return animate(seconds, (t) => scene.values[key] = from + (to - from) * curve.transform(t));
 
       case Effect(:final kind, :final anchor, :final id, :final duration, :final nearCat):
         scene.addEffect(kind, nearCat ? scene.catPosition + anchor : anchor, duration: duration, id: id);

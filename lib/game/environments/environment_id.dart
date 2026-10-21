@@ -17,6 +17,7 @@ enum EnvironmentId {
     GameLocation.kitchen => kitchen,
     GameLocation.bath => bathroom,
     GameLocation.outdoors => park,
+    GameLocation.bedroom => bedroom,
   };
 
   static EnvironmentId? tryParse(Object? name) {

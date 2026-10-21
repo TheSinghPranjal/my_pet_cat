@@ -17,13 +17,11 @@ GameSave _withStars(int stars) {
 
 void main() {
   test('cats unlock at their thresholds', () {
+    const starters = {CatId.mochi, CatId.kitty, CatId.biscuit, CatId.luna, CatId.pepper};
     const expected = <int, Set<CatId>>{
-      0: {CatId.mochi, CatId.kitty},
-      2: {CatId.mochi, CatId.kitty},
-      3: {CatId.mochi, CatId.kitty, CatId.biscuit},
-      5: {CatId.mochi, CatId.kitty, CatId.biscuit, CatId.luna},
-      8: {CatId.mochi, CatId.kitty, CatId.biscuit, CatId.luna, CatId.pepper},
-      10: {CatId.mochi, CatId.kitty, CatId.biscuit, CatId.luna, CatId.pepper, CatId.snowball},
+      0: starters,
+      9: starters,
+      10: {...starters, CatId.snowball},
     };
     for (final MapEntry(key: stars, value: cats) in expected.entries) {
       final save = _withStars(stars);

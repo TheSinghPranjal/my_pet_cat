@@ -1,6 +1,7 @@
 import '../models/activity_definition.dart';
 import '../scripting/script_step.dart';
 import 'bathroom/bath_scripts.dart';
+import 'bedroom/bedroom_scripts.dart';
 import 'kitchen/kitchen_scripts.dart';
 import 'living_area/home_scripts.dart';
 import 'park/park_scripts.dart';
@@ -20,5 +21,8 @@ abstract final class ActivityScripts {
     CatActivity.glassTrouble => KitchenScripts.glassTrouble,
     CatActivity.treatTime => KitchenScripts.treatTime,
     CatActivity.fishySurprise => KitchenScripts.fishySurprise,
+    CatActivity.wardrobeHide => BedroomScripts.wardrobeHide,
+    CatActivity.chewCable => BedroomScripts.chewCable,
+    CatActivity.pillowJump => BedroomScripts.pillowJump,
   };
 }

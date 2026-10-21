@@ -46,6 +46,9 @@ class PetWidgetPayload {
         CatActivity.glassTrouble => 'Oops... who, me?',
         CatActivity.treatTime => 'Found the secret treats!',
         CatActivity.fishySurprise => 'Best fish dinner ever!',
+        CatActivity.wardrobeHide => 'Peekaboo! You found me!',
+        CatActivity.chewCable => "Zzzap! Cables aren't snacks!",
+        CatActivity.pillowJump => 'Best. Pillow. Ever.',
       };
 
   Map<String, Object?> toMap() => {

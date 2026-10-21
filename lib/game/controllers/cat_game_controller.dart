@@ -100,6 +100,15 @@ class CatGameController extends ChangeNotifier {
   /// How far the kitchen treat cabinet is open (0 = closed).
   double get cabinetOpen => _scene.value(SceneKeys.cabinetOpen);
 
+  /// Animated furniture and characters of the current scene, by key.
+  double sceneValue(String key) => _scene.value(key);
+
+  /// Seconds of game time, for ambient loops (blinking, fuming).
+  double get sceneTime => _scene.time;
+
+  /// Whether the cat is out of sight (hiding in the wardrobe).
+  bool get catHidden => _scene.value(SceneKeys.catHidden) > 0;
+
   List<SpawnedObject> get objects => UnmodifiableListView(_scene.objects);
   List<SceneEffect> get effects => UnmodifiableListView(_scene.effects);
 

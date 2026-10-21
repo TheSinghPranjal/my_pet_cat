@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../environments/bedroom/bedroom_props.dart';
 import '../models/activity_definition.dart';
 import '../sketch/sketch.dart';
 import 'critters.dart';
@@ -30,6 +31,9 @@ class ActivityIcon extends StatelessWidget {
       CatActivity.glassTrouble => (GlassPainter.aspect * 1.3, GlassPainter(motionMarks: true)),
       CatActivity.treatTime => (TreatPainter.aspect, TreatPainter()),
       CatActivity.fishySurprise => (1.0, PanIconPainter()),
+      CatActivity.wardrobeHide => (WardrobePainter.aspect * 1.25, WardrobePainter(door: 0.45)),
+      CatActivity.chewCable => (1.0, const CableIconPainter()),
+      CatActivity.pillowJump => (PillowPainter.aspect, PillowPainter()),
     };
     return AspectRatio(aspectRatio: aspect, child: CustomPaint(painter: painter));
   }

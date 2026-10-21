@@ -51,7 +51,59 @@ class SceneEffectsPainter extends CustomPainter {
           _hearts(pen, e);
         case EffectKind.timer:
           _timer(pen, e);
+        case EffectKind.zap:
+          _zap(pen, e);
+        case EffectKind.feathers:
+          _feathers(pen, e);
       }
+      canvas.restore();
+    }
+  }
+
+  /// A silly cartoon zap: yellow zigzag bolts flickering around the cat.
+  void _zap(SketchPen pen, SceneEffect e) {
+    final flicker = (e.time * 16).floor();
+    for (var i = 0; i < 7; i++) {
+      if ((i + flicker).isOdd && i > 1) continue;
+      final a = -math.pi + i / 6 * math.pi + (flicker.isEven ? 0.12 : -0.12);
+      final d = Offset(math.cos(a), math.sin(a) * 0.85);
+      final n = Offset(-d.dy, d.dx);
+      final from = d * 11;
+      final bolt = Path()..moveTo(from.dx, from.dy);
+      for (var j = 1; j <= 3; j++) {
+        final p = d * (11 + j * 2.6) + n * (j.isOdd ? 1.4 : -1.4);
+        bolt.lineTo(p.dx, p.dy);
+      }
+      pen.stroke(bolt, _a(SketchColors.sun, e.fade), width: 1.6, sketchy: false, wobble: 0);
+      pen.stroke(bolt, _a(SketchColors.sunEdge, e.fade), width: 0.6, sketchy: false, wobble: 0);
+    }
+    for (final (i, o) in const [Offset(-13, -9), Offset(12, -11), Offset(0, -16)].indexed) {
+      final pulse = (math.sin(e.time * 20 + i * 2) + 1) / 2;
+      pen.star(o, 1 + pulse * 1.4, _a(SketchColors.sunEdge, e.fade), width: 0.6);
+    }
+  }
+
+  /// A few feathers bursting up from a pillow and drifting down.
+  void _feathers(SketchPen pen, SceneEffect e) {
+    for (var i = 0; i < 6; i++) {
+      final t = e.time - i * 0.12;
+      if (t < 0) continue;
+      final up = math.min(t / 0.4, 1.0);
+      final fall = math.max(0.0, t - 0.4);
+      final c = Offset((i - 2.5) * 3.2 * up + math.sin(fall * 4 + i) * 2.5, -9 * up + fall * 5);
+      final canvas = pen.canvas;
+      canvas.save();
+      canvas.translate(c.dx, c.dy);
+      canvas.rotate(math.sin(fall * 3 + i) * 0.7);
+      final feather = Path()
+        ..moveTo(0, -2.4)
+        ..quadraticBezierTo(1.4, 0, 0, 2.4)
+        ..quadraticBezierTo(-1.4, 0, 0, -2.4)
+        ..close();
+      final alpha = e.fade * (1 - (fall / 2).clamp(0.0, 1.0));
+      pen.fill(feather, _a(SketchColors.white, alpha));
+      pen.stroke(feather, _a(SketchColors.graphite, alpha), width: 0.35, sketchy: false, wobble: 0);
+      pen.line(const Offset(0, -2), const Offset(0, 2.6), _a(SketchColors.graphite, alpha), width: 0.3, sketchy: false);
       canvas.restore();
     }
   }

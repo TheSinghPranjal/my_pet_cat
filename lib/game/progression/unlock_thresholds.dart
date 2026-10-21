@@ -18,9 +18,9 @@ abstract final class UnlockThresholds {
   static const cats = <CatId, UnlockRule>{
     CatId.mochi: UnlockRule.always,
     CatId.kitty: UnlockRule.always,
-    CatId.biscuit: UnlockRule(3),
-    CatId.luna: UnlockRule(5),
-    CatId.pepper: UnlockRule(8),
+    CatId.biscuit: UnlockRule.always,
+    CatId.luna: UnlockRule.always,
+    CatId.pepper: UnlockRule.always,
     CatId.snowball: UnlockRule(10),
     CatId.ziggy: UnlockRule(12),
   };

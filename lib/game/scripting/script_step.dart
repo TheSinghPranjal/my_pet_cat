@@ -265,6 +265,24 @@ class SceneValue extends ScriptStep {
   final double Function(double t) value;
 }
 
+/// Sets a named scene value at once (a mood, which way someone faces).
+class SetValue extends ScriptStep {
+  const SetValue(this.key, this.value);
+
+  final String key;
+  final double value;
+}
+
+/// Tweens a named scene value from wherever it is now to [to].
+class TweenValue extends ScriptStep {
+  const TweenValue(this.key, this.to, this.seconds, {this.curve = Curves.easeInOut});
+
+  final String key;
+  final double to;
+  final double seconds;
+  final Curve curve;
+}
+
 // -----------------------------------------------------------------------------
 // Effects
 // -----------------------------------------------------------------------------

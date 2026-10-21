@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'activity_definition.dart';
 import 'game_positions.dart';
 
-enum GameLocation { home, kitchen, bath, outdoors }
+enum GameLocation { home, kitchen, bath, outdoors, bedroom }
 
 /// Everything that differs between locations, as data.
 class LocationConfig {
@@ -122,10 +122,28 @@ abstract final class Locations {
     ],
   );
 
+  static const bedroom = LocationConfig(
+    location: GameLocation.bedroom,
+    title: 'Bedroom',
+    greeting: 'Shh... it\'s her room!',
+    idlePositions: [
+      BedroomPositions.idlePositionA,
+      BedroomPositions.idlePositionB,
+      BedroomPositions.idlePositionC,
+    ],
+    walkArea: Rect.fromLTRB(0.28, 0.70, 0.66, 0.78),
+    activities: [
+      ActivityDefinition(CatActivity.wardrobeHide, 'Wardrobe', 'Hide in the wardrobe', accent: 0xFFF3DDBF),
+      ActivityDefinition(CatActivity.chewCable, 'Cable', 'Chew the cable', accent: 0xFFFFF1B8),
+      ActivityDefinition(CatActivity.pillowJump, 'Pillow', 'Jump on the pillow', accent: 0xFFFBD9E6),
+    ],
+  );
+
   static LocationConfig of(GameLocation location) => switch (location) {
         GameLocation.home => home,
         GameLocation.kitchen => kitchen,
         GameLocation.bath => bath,
         GameLocation.outdoors => outdoors,
+        GameLocation.bedroom => bedroom,
       };
 }

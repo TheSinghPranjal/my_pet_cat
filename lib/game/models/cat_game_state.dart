@@ -114,7 +114,23 @@ class SpawnedObject {
   double get sortY => position.dy + layerBias;
 }
 
-enum EffectKind { bubbles, splash, sparkles, droplets, leaves, puff, aroma, steam, heat, scratches, impact, hearts, timer }
+enum EffectKind {
+  bubbles,
+  splash,
+  sparkles,
+  droplets,
+  leaves,
+  puff,
+  aroma,
+  steam,
+  heat,
+  scratches,
+  impact,
+  hearts,
+  timer,
+  zap,
+  feathers,
+}
 
 /// A lightweight sketch effect anchored at a normalized position. Its look is
 /// a pure function of [time], so it needs no per-particle state.

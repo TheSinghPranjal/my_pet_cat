@@ -39,20 +39,24 @@ void main() {
     expect(catLook.value, CatLook.fluffy);
   });
 
-  testWidgets('locked cats show how to unlock them and are not selected', (tester) async {
+  testWidgets('the new cats are in colour and can be picked right away', (tester) async {
     await _pumpStart(tester);
-    for (var i = 0; i < 2; i++) {
-      await tester.fling(find.byType(PageView), const Offset(-300, 0), 1000);
+    await tester.tap(find.bySemanticsLabel('Next cat')); // Past Kitty.
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    for (final (cat, label) in [
+      (CatProfiles.biscuit, 'Biscuit · Lazy foodie'),
+      (CatProfiles.luna, 'Luna · Shy night owl'),
+      (CatProfiles.pepper, 'Pepper · Mischief maker'),
+    ]) {
+      await tester.tap(find.bySemanticsLabel('Next cat'));
+      await tester.pump();
       await tester.pump(const Duration(seconds: 1));
+      expect(find.text(label), findsOneWidget);
+      expect(selectedCat.value, cat);
+      expect(catLook.value, cat.look);
+      expect(find.byType(ColorFiltered), findsNothing, reason: 'no silhouette');
     }
-    expect(find.text('Biscuit · Lazy foodie'), findsOneWidget);
-    expect(find.text('Unlock at 3 friendship stars'), findsOneWidget);
-    expect(find.byType(ColorFiltered), findsWidgets, reason: 'pencil silhouette');
-    expect(selectedCat.value, CatProfiles.kitty, reason: 'stays on the last unlocked cat');
-
-    // Picking her look another way is refused too.
-    catLook.value = CatLook.ginger;
-    expect(catLook.value, CatLook.classic);
   });
 
   testWidgets('arrows step through every cat, wrapping around', (tester) async {
@@ -62,6 +66,9 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     expect(catLook.value, CatLook.classic);
     expect(tester.widget<PageView>(find.byType(PageView)).controller!.page, 1);
+
+    // Every cat in the carousel is playable, so each step selects her.
+    expect(CatProfiles.all.every((c) => GameStore.instance.save.isCatUnlocked(c.id)), isTrue);
 
     for (var i = 1; i < CatProfiles.all.length; i++) {
       await tester.tap(find.bySemanticsLabel('Next cat'));

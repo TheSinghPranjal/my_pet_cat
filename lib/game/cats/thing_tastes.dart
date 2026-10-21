@@ -22,6 +22,10 @@ abstract final class ThingTastes {
     'glassTrouble': ThingTaste(Trait.tidiness, inverted: true),
     'treatTime': ThingTaste(Trait.appetite),
     'fishySurprise': ThingTaste(Trait.appetite),
+    // Bedroom.
+    'wardrobeHide': ThingTaste(Trait.curiosity),
+    'chewCable': ThingTaste(Trait.tidiness, inverted: true),
+    'pillowJump': ThingTaste(Trait.energy),
     // The universal favourite.
     'cardboardBox': ThingTaste.universal(),
   };

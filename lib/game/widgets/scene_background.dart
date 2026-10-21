@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 
+import '../environments/bedroom/bedroom_background.dart';
 import '../models/game_location.dart';
 import '../models/game_positions.dart';
 import '../sketch/sketch.dart';
@@ -72,6 +73,7 @@ class GameBackground extends StatelessWidget {
       GameLocation.kitchen => KitchenPainter(unit),
       GameLocation.bath => BathroomPainter(unit),
       GameLocation.outdoors => GardenPainter(unit),
+      GameLocation.bedroom => BedroomPainter(unit),
     };
     return RepaintBoundary(
       child: CustomPaint(painter: painter, isComplex: true, child: const SizedBox.expand()),

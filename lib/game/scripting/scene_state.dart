@@ -9,6 +9,9 @@ import '../models/cat_game_state.dart';
 abstract final class SceneKeys {
   static const tubFoam = 'bath.tubFoam';
   static const cabinetOpen = 'kitchen.cabinetOpen';
+
+  /// 1 while the cat is out of sight (e.g. inside the wardrobe).
+  static const catHidden = 'cat.hidden';
 }
 
 /// Everything on stage that scripts move: the cat, temporary props and

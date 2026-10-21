@@ -6,6 +6,7 @@ import '../home_widget/pet_home_widget_service.dart';
 import '../navigation/app_launch_router.dart';
 import 'cats/selected_cat.dart';
 import 'controllers/cat_game_controller.dart';
+import 'environments/bedroom/bedroom_layer.dart';
 import 'environments/environment_id.dart';
 import 'models/activity_definition.dart';
 import 'models/cat_game_state.dart';
@@ -329,15 +330,19 @@ class _Playfield extends StatelessWidget {
         }
 
         final catWidth = layout.unit * GameSizes.cat;
-        items.add((
-          controller.catPosition.dy,
-          anchored(
-            controller.catPosition,
-            Size(catWidth, catWidth / CatCharacter.aspect),
-            0.5,
-            CatCharacter(frame: controller.catFrame, facing: controller.facing, width: catWidth),
-          ),
-        ));
+        if (!controller.catHidden) {
+          items.add((
+            controller.catPosition.dy,
+            anchored(
+              controller.catPosition,
+              Size(catWidth, catWidth / CatCharacter.aspect),
+              0.5,
+              CatCharacter(frame: controller.catFrame, facing: controller.facing, width: catWidth),
+            ),
+          ));
+        }
+
+        if (controller.location == GameLocation.bedroom) items.addAll(bedroomItems(controller, layout, anchored));
 
         if (controller.location == GameLocation.home) {
           // Resting props belong to the room; the bowl and ball step aside
