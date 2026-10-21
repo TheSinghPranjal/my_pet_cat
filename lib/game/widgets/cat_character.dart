@@ -55,8 +55,13 @@ class CatPainter extends CustomPainter {
     canvas.scale(flip * s, s);
     canvas.translate(-50, 0);
 
-    _shadow(pen);
+    if (frame.shadow) _shadow(pen);
     canvas.translate(0, frame.bodyLift);
+    if (frame.bodyRotation != 0) {
+      canvas.translate(48, 62);
+      canvas.rotate(frame.bodyRotation);
+      canvas.translate(-48, -62);
+    }
     _tail(pen);
     _leg(pen, 0, far: true);
     _leg(pen, 2, far: true);
@@ -250,12 +255,12 @@ class CatPainter extends CustomPainter {
       );
       return;
     }
-    final eye = ovalPath(c, 9.2, 10.8 * open);
+    final eye = ovalPath(c, 9.2 * frame.eyeScale, 10.8 * open * frame.eyeScale);
     final canvas = pen.canvas;
     pen.fill(eye, SketchColors.eye);
     canvas.save();
     canvas.clipPath(eye);
-    final look = Offset(frame.gaze * 1.3, 0);
+    final look = Offset(frame.gaze * 1.3, frame.gazeY * 1.5);
     pen.fill(ovalPath(c + look + Offset(0, 3.4 * open), 7, 5.5 * open),
         SketchColors.iris.withValues(alpha: 0.85));
     pen.fill(ovalPath(c + look + const Offset(-1.4, -1.9), 3.6, 3.6 * open), SketchColors.white);
@@ -350,6 +355,13 @@ class CatPainter extends CustomPainter {
       pen.line(hc + const Offset(23, -4), hc + const Offset(27, -7), color, width: 0.9, sketchy: false);
       pen.line(hc + const Offset(24.5, 1), hc + const Offset(29, 0.5), color, width: 0.9, sketchy: false);
       pen.line(hc + const Offset(-23, -4), hc + const Offset(-27, -7), color, width: 0.9, sketchy: false);
+    }
+    if (frame.mark == CatMark.exclaim) {
+      final top = hc + const Offset(0, -34);
+      pen.line(top, top + const Offset(0.6, 7), SketchColors.ink, width: 1.8, sketchy: false, wobble: 0.1);
+      pen.fill(ovalPath(top + const Offset(0.8, 10), 2, 2), SketchColors.ink);
+      pen.line(top + const Offset(-5, 2), top + const Offset(-7.5, 0), SketchColors.ink, width: 0.9, sketchy: false);
+      pen.line(top + const Offset(5, 2), top + const Offset(7.5, 0), SketchColors.ink, width: 0.9, sketchy: false);
     }
     if (frame.sparkle > 0) {
       final pulse = (math.sin(frame.sparkle * 9) + 1) / 2;

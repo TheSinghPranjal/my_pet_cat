@@ -5,24 +5,27 @@ import 'package:flutter/widgets.dart';
 import '../sketch/sketch.dart';
 
 /// Shared press behavior: shrinks slightly while held, dims when disabled.
-class _SketchPressable extends StatefulWidget {
-  const _SketchPressable({
+class SketchPressable extends StatefulWidget {
+  const SketchPressable({
+    super.key,
     required this.enabled,
     required this.onPressed,
     required this.semanticLabel,
     required this.child,
+    this.selected = false,
   });
 
   final bool enabled;
+  final bool selected;
   final VoidCallback onPressed;
   final String semanticLabel;
   final Widget child;
 
   @override
-  State<_SketchPressable> createState() => _SketchPressableState();
+  State<SketchPressable> createState() => _SketchPressableState();
 }
 
-class _SketchPressableState extends State<_SketchPressable> {
+class _SketchPressableState extends State<SketchPressable> {
   bool _pressed = false;
 
   void _setPressed(bool value) {
@@ -35,6 +38,7 @@ class _SketchPressableState extends State<_SketchPressable> {
     return Semantics(
       button: true,
       enabled: enabled,
+      selected: widget.selected,
       label: widget.semanticLabel,
       excludeSemantics: true,
       child: GestureDetector(
@@ -57,101 +61,121 @@ class _SketchPressableState extends State<_SketchPressable> {
   }
 }
 
-/// Large rounded notebook button (Feed / Play) with emphasis marks.
+/// Hand-drawn rounded paper card with a doubled blue ink border.
+class SketchFramePainter extends CustomPainter {
+  const SketchFramePainter({this.radius = 0.36, this.seed = 1, this.emphasis = false});
+
+  /// Corner radius as a fraction of the height.
+  final double radius;
+  final int seed;
+
+  /// Adds two small doodled emphasis ticks at the top-right corner.
+  final bool emphasis;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final k = math.min(size.height, 60) / 40;
+    final pen = SketchPen(canvas);
+    final rect = (Offset.zero & size).deflate(k * 1.5);
+    final r = Radius.circular(size.height * radius);
+    final frame = Path()..addRRect(RRect.fromRectAndRadius(rect, r));
+    pen.fill(frame, SketchColors.white);
+    pen.stroke(frame, SketchColors.ink, width: k * 1.3, wobble: k * 0.5, seed: seed);
+    pen.stroke(
+      Path()..addRRect(RRect.fromRectAndRadius(rect.deflate(k * 2.2), Radius.circular(size.height * radius * 0.85))),
+      SketchColors.ink.withValues(alpha: 0.55),
+      width: k * 0.6,
+      wobble: k * 0.4,
+      seed: seed + 1,
+      sketchy: false,
+    );
+    if (emphasis) {
+      final corner = Offset(size.width - k * 2, k * 2);
+      for (final a in const [-0.5, -1.05]) {
+        final dir = Offset(math.cos(a), math.sin(a));
+        pen.line(corner + dir * k * 2.5, corner + dir * k * 6, SketchColors.ink,
+            width: k * 0.9, wobble: 0, sketchy: false);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(SketchFramePainter oldDelegate) =>
+      oldDelegate.radius != radius || oldDelegate.seed != seed || oldDelegate.emphasis != emphasis;
+}
+
+/// Large contextual action button: drawn icon with a small label.
 class GameActionButton extends StatelessWidget {
   const GameActionButton({
     super.key,
     required this.icon,
+    required this.label,
     required this.onPressed,
     required this.semanticLabel,
     this.enabled = true,
   });
 
   final Widget icon;
+  final String label;
   final VoidCallback onPressed;
   final String semanticLabel;
   final bool enabled;
 
   @override
   Widget build(BuildContext context) {
-    return _SketchPressable(
+    return SketchPressable(
       enabled: enabled,
       onPressed: onPressed,
       semanticLabel: semanticLabel,
       child: CustomPaint(
-        painter: _ButtonFramePainter(),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 5, 12, 7),
-          child: Center(child: icon),
+        painter: const SketchFramePainter(radius: 0.3, emphasis: true),
+        child: LayoutBuilder(
+          builder: (context, box) => Padding(
+            padding: EdgeInsets.fromLTRB(box.maxWidth * 0.1, box.maxHeight * 0.1,
+                box.maxWidth * 0.1, box.maxHeight * 0.08),
+            child: Column(
+              children: [
+                Expanded(child: Center(child: icon)),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                  softWrap: false,
+                  style: TextStyle(
+                    color: SketchColors.ink,
+                    fontSize: box.maxHeight * 0.17,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.2,
+                    height: 1.1,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-class _ButtonFramePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final k = size.height / 40;
-    final pen = SketchPen(canvas, pxPerUnit: 1);
-    final rect = (Offset.zero & size).deflate(k * 1.5);
-    final frame = Path()..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(size.height * 0.36)));
-    pen.fill(frame, SketchColors.white);
-    pen.stroke(frame, SketchColors.ink, width: k * 1.3, wobble: k * 0.5, seed: 1);
-    pen.stroke(
-      Path()..addRRect(RRect.fromRectAndRadius(rect.deflate(k * 2.2), Radius.circular(size.height * 0.3))),
-      SketchColors.ink.withValues(alpha: 0.6),
-      width: k * 0.6,
-      wobble: k * 0.4,
-      seed: 2,
-      sketchy: false,
-    );
-    // Emphasis marks on both sides.
-    for (final side in const [-1.0, 1.0]) {
-      final x = side < 0 ? -k * 2.5 : size.width + k * 2.5;
-      for (final (dy, tilt) in const [(0.3, -0.5), (0.5, 0.0), (0.7, 0.5)]) {
-        final start = Offset(x, size.height * dy);
-        final dir = Offset(side * math.cos(tilt), math.sin(tilt) * side);
-        pen.line(start, start + dir * k * 5, SketchColors.ink, width: k * 0.9, wobble: 0, sketchy: false);
-      }
-    }
-  }
+/// Small round settings button.
+class SketchSettingsButton extends StatelessWidget {
+  const SketchSettingsButton({super.key, required this.onPressed});
 
-  @override
-  bool shouldRepaint(_ButtonFramePainter oldDelegate) => false;
-}
-
-enum SketchGlyph { home, settings }
-
-/// Small round icon button used for Home and Settings.
-class SketchIconButton extends StatelessWidget {
-  const SketchIconButton({
-    super.key,
-    required this.glyph,
-    required this.onPressed,
-    required this.semanticLabel,
-  });
-
-  final SketchGlyph glyph;
   final VoidCallback onPressed;
-  final String semanticLabel;
 
   @override
   Widget build(BuildContext context) {
-    return _SketchPressable(
+    return SketchPressable(
       enabled: true,
       onPressed: onPressed,
-      semanticLabel: semanticLabel,
-      child: CustomPaint(painter: _GlyphPainter(glyph), child: const SizedBox.expand()),
+      semanticLabel: 'Settings',
+      child: CustomPaint(painter: _GearPainter(), child: const SizedBox.expand()),
     );
   }
 }
 
-class _GlyphPainter extends CustomPainter {
-  _GlyphPainter(this.glyph);
-
-  final SketchGlyph glyph;
-
+class _GearPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final k = size.width / 40;
@@ -161,45 +185,23 @@ class _GlyphPainter extends CustomPainter {
     final ring = ovalPath(const Offset(20, 20), 36, 36);
     pen.fill(ring, SketchColors.white);
     pen.stroke(ring, SketchColors.ink, width: 1.6, wobble: 0.5, seed: 3);
-
-    final Path shape;
-    if (glyph == SketchGlyph.home) {
-      shape = Path()
-        ..moveTo(9.5, 20)
-        ..lineTo(20, 10.5)
-        ..lineTo(30.5, 20)
-        ..lineTo(27.5, 20)
-        ..lineTo(27.5, 29)
-        ..lineTo(12.5, 29)
-        ..lineTo(12.5, 20)
-        ..close();
-    } else {
-      shape = Path();
-      for (var i = 0; i < 8; i++) {
-        final a = i / 8 * math.pi * 2;
-        shape.addPath(
-          Path()..addRect(Rect.fromCenter(center: const Offset(0, -9.5), width: 4.2, height: 5)),
-          const Offset(20, 20),
-          matrix4: (Matrix4.identity()..rotateZ(a)).storage,
-        );
-      }
-      shape.addOval(Rect.fromCircle(center: const Offset(20, 20), radius: 8.5));
+    final gear = Path();
+    for (var i = 0; i < 8; i++) {
+      gear.addPath(
+        Path()..addRect(Rect.fromCenter(center: const Offset(0, -9.5), width: 4.2, height: 5)),
+        const Offset(20, 20),
+        matrix4: (Matrix4.identity()..rotateZ(i / 8 * math.pi * 2)).storage,
+      );
     }
-    pen.fill(shape, SketchColors.ink.withValues(alpha: 0.85));
-    pen.hatch(shape, SketchColors.ink, spacing: 1.2, seed: 4);
-    pen.stroke(shape, SketchColors.ink, width: 1.1, wobble: 0.3, seed: 5);
-    if (glyph == SketchGlyph.home) {
-      final door = rectPath(17.6, 22.5, 22.4, 29);
-      pen.fill(door, SketchColors.white);
-      pen.stroke(door, SketchColors.ink, width: 0.8, sketchy: false, wobble: 0.2);
-    } else {
-      final hole = ovalPath(const Offset(20, 20), 7, 7);
-      pen.fill(hole, SketchColors.white);
-      pen.stroke(hole, SketchColors.ink, width: 0.9, sketchy: false, wobble: 0.2);
-    }
+    gear.addOval(Rect.fromCircle(center: const Offset(20, 20), radius: 8.5));
+    pen.fill(gear, SketchColors.ink.withValues(alpha: 0.85));
+    pen.stroke(gear, SketchColors.ink, width: 1.1, wobble: 0.3, seed: 5);
+    final hole = ovalPath(const Offset(20, 20), 7, 7);
+    pen.fill(hole, SketchColors.white);
+    pen.stroke(hole, SketchColors.ink, width: 0.9, sketchy: false, wobble: 0.2);
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(_GlyphPainter oldDelegate) => oldDelegate.glyph != glyph;
+  bool shouldRepaint(_GearPainter oldDelegate) => false;
 }

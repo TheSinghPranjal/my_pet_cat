@@ -4,132 +4,33 @@ import 'package:flutter/widgets.dart';
 
 import '../models/game_positions.dart';
 import '../sketch/sketch.dart';
+import 'scene_background.dart';
 
-/// Warm notebook paper with a pale blue grid, covering the whole screen.
-class GraphPaper extends StatelessWidget {
-  const GraphPaper({super.key, required this.spacing});
-
-  final double spacing;
-
-  @override
-  Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: CustomPaint(painter: _GraphPaperPainter(spacing), child: const SizedBox.expand()),
-    );
-  }
-}
-
-class _GraphPaperPainter extends CustomPainter {
-  _GraphPaperPainter(this.spacing);
-
-  final double spacing;
+/// The Home living room.
+class HomeRoomPainter extends SceneBackgroundPainter {
+  HomeRoomPainter(super.unit);
 
   @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = SketchColors.paper);
-    final grid = Paint()
-      ..color = SketchColors.grid
-      ..strokeWidth = 0.8;
-    for (var x = spacing / 2; x < size.width; x += spacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), grid);
-    }
-    for (var y = spacing / 2; y < size.height; y += spacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
-    }
-    // Faint paper grain.
-    final rnd = math.Random(4);
-    final grain = Paint()..color = SketchColors.graphite.withValues(alpha: 0.07);
-    for (var i = 0; i < 500; i++) {
-      canvas.drawCircle(
-        Offset(rnd.nextDouble() * size.width, rnd.nextDouble() * size.height),
-        0.4 + rnd.nextDouble() * 0.6,
-        grain,
-      );
-    }
-  }
+  void paintScene(Canvas canvas, SketchPen pen, double w, double h) {
+    void place(double x, double y, void Function() draw) =>
+        SceneBackgroundPainter.place(canvas, Offset(x * w, y * h), draw);
 
-  @override
-  bool shouldRepaint(_GraphPaperPainter oldDelegate) => oldDelegate.spacing != spacing;
-}
-
-/// The static, hand-drawn room. Painted once per layout and cached behind a
-/// [RepaintBoundary]; it never animates.
-class RoomBackground extends StatelessWidget {
-  const RoomBackground({super.key, required this.unit});
-
-  final double unit;
-
-  @override
-  Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: CustomPaint(
-        painter: _RoomPainter(unit),
-        isComplex: true,
-        child: const SizedBox.expand(),
-      ),
-    );
-  }
-}
-
-/// Draws in units where the ideal 9:16 stage is 100 units wide. Each piece of
-/// furniture is anchored at a normalized position and sized in units, so it
-/// keeps its shape on any aspect ratio.
-class _RoomPainter extends CustomPainter {
-  _RoomPainter(this.unit);
-
-  final double unit;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final k = unit / 100;
-    final w = size.width / k;
-    final h = size.height / k;
-    final pen = SketchPen(canvas, pxPerUnit: k, weight: 0.6);
-    canvas.save();
-    canvas.scale(k);
-
-    void place(double x, double y, void Function() draw) {
-      canvas.save();
-      canvas.translate(x * w, y * h);
-      draw();
-      canvas.restore();
-    }
-
-    _floor(pen, w, h);
-    place(0.5, 0, () => _lamp(pen));
-    place(0.03, 0.16, () => _window(pen));
-    place(0.57, 0.215, () => _picture(pen));
-    place(0.80, 0.235, () => _shelf(pen));
-    place(0, 0.575, () => _dresser(pen));
-    place(0, 0.42, () => _pottedPlant(pen));
-    place(0.72, 0.44, () => _catTree(pen));
-    place(-0.01, 0.735, () => _bed(pen));
-    place(0.84, 0.79, () => _mouse(pen));
-
-    canvas.restore();
-  }
-
-  // --- Floor ----------------------------------------------------------------
-
-  void _floor(SketchPen pen, double w, double h) {
-    final top = h * GamePositions.floorLine;
-    final bottom = h * GamePositions.floorBottom;
-    final rnd = math.Random(7);
-    final paint = Paint()
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = 0.5;
-    for (var i = 0; i < 260; i++) {
-      final t = math.pow(rnd.nextDouble(), 1.6).toDouble();
-      final y = top + 1.2 + (bottom - top) * t;
-      final x = rnd.nextDouble() * w;
-      final length = 4 + rnd.nextDouble() * 14;
-      final tilt = (rnd.nextDouble() - 0.5) * 1.2;
-      paint.color = SketchColors.inkSoft.withValues(alpha: 0.6 * (1 - t * 0.65));
-      pen.canvas.drawLine(Offset(x, y), Offset(x + length, y + tilt), paint);
-    }
-    pen.line(Offset(-2, top), Offset(w + 2, top), SketchColors.ink, width: 1.0, wobble: 0.35, seed: 1);
-    pen.line(Offset(-2, top + 0.9), Offset(w + 2, top + 0.9), SketchColors.inkSoft,
-        width: 0.5, wobble: 0.4, seed: 2, sketchy: false);
+    ground(pen, w, h, shade: SketchColors.inkSoft, line: SketchColors.ink);
+    place(HomePositions.mouseHolePosition.dx, HomePositions.mouseHolePosition.dy,
+        () => _mouseHole(pen));
+    // The lamp hangs a little higher than its cord length so it clears the
+    // window rod.
+    place(0.55, 0, () {
+      canvas.translate(0, -5);
+      _lamp(pen);
+    });
+    place(0.03, 0.11, () => _window(pen));
+    place(0.60, 0.165, () => _picture(pen));
+    place(0.80, 0.185, () => _shelf(pen));
+    place(0, 0.525, () => _dresser(pen));
+    place(0, 0.37, () => _pottedPlant(pen));
+    place(0.72, 0.39, () => _catTree(pen));
+    place(-0.01, 0.685, () => _bed(pen));
   }
 
   // --- Lamp -----------------------------------------------------------------
@@ -354,7 +255,7 @@ class _RoomPainter extends CustomPainter {
       for (var j = 1; j <= 6 - i * 2; j++) {
         final tangent = metric.getTangentForOffset(metric.length * j / (7 - i * 2))!;
         final n = Offset(-tangent.vector.dy, tangent.vector.dx) * (j.isEven ? 1 : -1);
-        _leaf(pen, tangent.position, tangent.position + n * 2.6 + tangent.vector * 1.2,
+        leaf(pen, tangent.position, tangent.position + n * 2.6 + tangent.vector * 1.2,
             width: 1.1, seed: 50 + j + i * 10);
       }
     }
@@ -367,7 +268,7 @@ class _RoomPainter extends CustomPainter {
     pen.fill(rim, SketchColors.white);
     pen.stroke(rim, SketchColors.ink, width: 0.6, seed: 61);
     for (final (i, tip) in const [Offset(2.5, 1.6), Offset(6.5, -0.4), Offset(10.8, 1.4), Offset(12.6, 4.6)].indexed) {
-      _leaf(pen, const Offset(7, 7), tip, width: 1.6, seed: 62 + i);
+      leaf(pen, const Offset(7, 7), tip, width: 1.6, seed: 62 + i);
     }
   }
 
@@ -403,7 +304,7 @@ class _RoomPainter extends CustomPainter {
     for (final (i, tip) in tips.indexed) {
       final stemEnd = Offset.lerp(base, tip, 0.35)!;
       pen.line(base, stemEnd, SketchColors.leafDark, width: 0.55, seed: 80 + i);
-      _leaf(pen, stemEnd, tip, width: 2.8, seed: 85 + i);
+      leaf(pen, stemEnd, tip, width: 2.8, seed: 85 + i);
     }
     final pot = polygon(const [Offset(5, 18.5), Offset(16.5, 18.5), Offset(15.2, 28.5), Offset(6.3, 28.5)]);
     pen.fill(pot, SketchColors.white);
@@ -419,25 +320,6 @@ class _RoomPainter extends CustomPainter {
       ..cubicTo(12.8, 21.4, 13.6, 23.6, 10.8, 25.6)
       ..close();
     pen.stroke(heart, SketchColors.ink, width: 0.6, seed: 92);
-  }
-
-  void _leaf(SketchPen pen, Offset base, Offset tip, {required double width, required int seed}) {
-    final dir = tip - base;
-    final length = dir.distance;
-    if (length == 0) return;
-    final n = Offset(-dir.dy, dir.dx) / length;
-    final mid = Offset.lerp(base, tip, 0.5)!;
-    final leaf = Path()
-      ..moveTo(base.dx, base.dy)
-      ..quadraticBezierTo(mid.dx + n.dx * width * 2, mid.dy + n.dy * width * 2, tip.dx, tip.dy)
-      ..quadraticBezierTo(mid.dx - n.dx * width * 2, mid.dy - n.dy * width * 2, base.dx, base.dy)
-      ..close();
-    pen.fill(leaf, SketchColors.leaf.withValues(alpha: 0.4));
-    pen.hatch(leaf, SketchColors.leaf, spacing: 0.7, angle: math.atan2(n.dy, n.dx) + 0.5,
-        width: 0.4, seed: seed);
-    pen.stroke(leaf, SketchColors.leafDark, width: 0.55, wobble: 0.2, seed: seed);
-    pen.line(base, Offset.lerp(base, tip, 0.85)!, SketchColors.leafDark,
-        width: 0.35, sketchy: false, wobble: 0.1);
   }
 
   // --- Cat tree -------------------------------------------------------------
@@ -521,35 +403,18 @@ class _RoomPainter extends CustomPainter {
     }
   }
 
-  // --- Toy mouse ------------------------------------------------------------
+  // --- Mouse hole ----------------------------------------------------------
 
-  void _mouse(SketchPen pen) {
-    pen.hatch(ovalPath(const Offset(6, 5.4), 10, 1.4), SketchColors.inkSoft, spacing: 0.6, seed: 120);
-    pen.stroke(
-      Path()
-        ..moveTo(9.4, 4.4)
-        ..cubicTo(11.5, 3.8, 11.8, 6.2, 13.4, 5)
-        ..quadraticBezierTo(14.4, 4.2, 15.2, 4.8),
-      SketchColors.wool,
-      width: 0.5,
-      sketchy: false,
-    );
-    final body = Path()
-      ..moveTo(0.8, 4.3)
-      ..quadraticBezierTo(2.4, 0.8, 6.4, 1.2)
-      ..quadraticBezierTo(9.6, 1.8, 9.6, 4.6)
-      ..lineTo(1.6, 4.8)
+  void _mouseHole(SketchPen pen) {
+    final hole = Path()
+      ..moveTo(-4.5, 0.4)
+      ..lineTo(-4.5, -3)
+      ..arcToPoint(const Offset(4.5, -3), radius: const Radius.circular(4.5))
+      ..lineTo(4.5, 0.4)
       ..close();
-    pen.fill(body, SketchColors.white);
-    pen.hatch(body, SketchColors.graphite, spacing: 0.6, seed: 121);
-    pen.stroke(body, SketchColors.pencil, width: 0.5, seed: 121);
-    final ear = ovalPath(const Offset(4.2, 1.6), 2.6, 2.6);
-    pen.fill(ear, SketchColors.pink);
-    pen.stroke(ear, SketchColors.pencil, width: 0.45, sketchy: false);
-    pen.fill(ovalPath(const Offset(2.6, 2.9), 0.7, 0.7), SketchColors.pencil);
-    pen.fill(ovalPath(const Offset(0.9, 4.1), 0.8, 0.7), SketchColors.pinkDeep);
+    pen.fill(hole, SketchColors.eye.withValues(alpha: 0.85));
+    pen.hatch(hole, SketchColors.ink, spacing: 0.6, cross: true, seed: 130);
+    pen.stroke(hole, SketchColors.ink, width: 0.9, seed: 130);
   }
 
-  @override
-  bool shouldRepaint(_RoomPainter oldDelegate) => oldDelegate.unit != unit;
 }
