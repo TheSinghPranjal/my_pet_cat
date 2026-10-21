@@ -3,8 +3,9 @@
 //
 //   flutter test tool/widget_assets/render_widget_assets_test.dart
 //
-// Writes Android drawables (res/drawable-nodpi/widget_*.png) and the iOS
-// widget extension's asset catalog (ios/PetWidget/Assets.xcassets).
+// Writes Android drawables (res/drawable-nodpi/widget_*.png), the iOS
+// widget extension's asset catalog (ios/PetWidget/Assets.xcassets), and the
+// Android flip-book layout generated from widget_routine.dart.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
@@ -19,41 +20,70 @@ import 'package:my_pet_cat/game/widgets/cat_character.dart';
 import 'package:my_pet_cat/game/widgets/food_bowl.dart';
 import 'package:my_pet_cat/game/widgets/wool_ball.dart';
 
-const _androidDir = 'android/app/src/main/res/drawable-nodpi';
+import 'widget_routine.dart';
+
+const _androidRes = 'android/app/src/main/res';
+const _androidDir = '$_androidRes/drawable-nodpi';
 const _iosDir = 'ios/PetWidget/Assets.xcassets';
 
-/// Stage frames: the kitten plus her wool ball on one transparent canvas
-/// (150x95 units) with identical anchors in every pose.
-const _stageUnits = Size(150, 95);
-const _px = 5.0;
-const _sitFeet = [Offset(-3, -5), Offset(-3, -5), Offset(-1, -5), Offset(-1, -5)];
+/// Pose for the static widget-picker previews.
+const _previewPose = CatFrame();
 
-const poses = <String, CatFrame>{
-  'idle': CatFrame(),
-  'blink': CatFrame(eyeOpen: 0),
-  'tail_up': CatFrame(tailAngle: 0.45),
-  'tail_down': CatFrame(tailAngle: -0.35),
-  'look_at_toy': CatFrame(
-      bodyLift: 5, feet: _sitFeet, headOffset: Offset(1, 0), headTilt: 0.12, gaze: 1, gazeY: 0.8, earTwitch: 0.12),
-  'paw_reach': CatFrame(
-      bodyLift: 1.5,
-      headOffset: Offset(1, 1.5),
-      raisedPaw: Offset(88, 66),
-      gaze: 1,
-      gazeY: 0.8,
-      mouth: CatMouth.open,
-      tailAngle: 0.2),
-  'paw_tap': CatFrame(
-      bodyLift: 1.5,
-      headOffset: Offset(2, 2),
-      raisedPaw: Offset(93, 78),
-      gaze: 1,
-      gazeY: 1,
-      mouth: CatMouth.open,
-      tailAngle: 0.3),
-  'happy': CatFrame(happyEyes: true, mouth: CatMouth.tongue, tailAngle: 0.35, sparkle: 0.17),
-  'rest': CatFrame(bodyLift: 5, feet: _sitFeet, happyEyes: true, headOffset: Offset(-2, -1), tailAngle: -0.2),
-};
+/// Cat-only frames: the cat's 100x85 box plus a small margin, transparent.
+const _catBox = Size(104, 88);
+const _catPx = 4.0;
+
+void _cat(Canvas canvas, CatFrame frame) {
+  canvas.save();
+  canvas.translate(2 * _catPx, 2 * _catPx);
+  CatPainter(frame: frame, facing: 1, look: CatLook.fluffy).paint(canvas, const Size(100 * _catPx, 85 * _catPx));
+  canvas.restore();
+}
+
+/// A doodled speech bubble with a hand-lettered "Meow!", its tail pointing
+/// down-left at the cat's mouth. Drawn in a 68x36 unit box.
+void _meowBubble(Canvas canvas, double s) {
+  final pen = SketchPen(canvas, pxPerUnit: s);
+  canvas.save();
+  canvas.scale(s);
+  final shape = Path.combine(
+    PathOperation.union,
+    Path()..addRRect(RRect.fromLTRBR(6, 1.5, 66.5, 27, const Radius.circular(11))),
+    Path()..addPolygon(const [Offset(12, 23), Offset(2, 34.5), Offset(21, 25.5)], true),
+  );
+  pen.fill(shape, SketchColors.white);
+  pen.hatch(shape, SketchColors.coralLight, spacing: 1.4, angle: -0.6, width: 0.5, seed: 61);
+  pen.stroke(shape, SketchColors.ink, width: 1.4, wobble: 0.35, seed: 62);
+  const ink = SketchColors.ink;
+  final letters = Path()
+    // M
+    ..moveTo(13, 21)
+    ..lineTo(14.5, 7.5)
+    ..lineTo(19.5, 16)
+    ..lineTo(24.5, 7.5)
+    ..lineTo(26, 21)
+    // e
+    ..moveTo(29.5, 16)
+    ..lineTo(36.5, 16)
+    ..arcTo(Rect.fromCircle(center: const Offset(33, 16.3), radius: 3.6), -0.08, -5.2, false)
+    // o
+    ..addOval(Rect.fromCircle(center: const Offset(42.6, 17.2), radius: 3.6))
+    // w
+    ..moveTo(48, 13)
+    ..lineTo(50, 21)
+    ..lineTo(52.6, 15.5)
+    ..lineTo(55.2, 21)
+    ..lineTo(57.4, 13)
+    // !
+    ..moveTo(61.5, 6.5)
+    ..lineTo(61, 17);
+  pen.stroke(letters, ink, width: 2.1, sketchy: false, wobble: 0.15, seed: 63);
+  pen.fill(ovalPath(const Offset(60.9, 21), 2.4, 2.4), ink);
+  // Two little "sound" ticks.
+  pen.line(const Offset(2, 8), const Offset(-0.5, 5), SketchColors.pinkDeep, width: 1.2, sketchy: false);
+  pen.line(const Offset(2.5, 13.5), const Offset(-1, 13), SketchColors.pinkDeep, width: 1.2, sketchy: false);
+  canvas.restore();
+}
 
 void _stage(Canvas canvas, double s, CatFrame frame) {
   // Wool ball first, so a tapping paw lands in front of it.
@@ -175,10 +205,15 @@ void main() {
       ..createSync(recursive: true)
       ..writeAsStringSync('{\n  "info" : {\n    "author" : "xcode",\n    "version" : 1\n  }\n}\n');
 
-    final stageSize = _stageUnits * _px;
-    for (final entry in poses.entries) {
-      await _save('kitten_${entry.key}', stageSize, (c) => _stage(c, _px, entry.value));
+    for (final MapEntry(key: name, value: frame) in catFrames.entries) {
+      await _save('cat_$name', _catBox * _catPx, (c) => _cat(c, frame));
     }
+    await _save('meow', const Size(68 * 5, 36 * 5), (c) {
+      c.translate(5, 0);
+      _meowBubble(c, 4.85);
+    });
+    File('$_androidRes/layout/pet_widget_kitten.xml').writeAsStringSync(kittenLayoutXml());
+    File('$_androidRes/values/widget_frames.xml').writeAsStringSync(kittenFramesXml());
     await _save('wool_ball', const Size(340, 220), (c) => WoolBallPainter(rotation: 0.4).paint(c, const Size(340, 220)));
     await _save('food_bowl', const Size(300, 186), (c) => FoodBowlPainter().paint(c, const Size(300, 186)));
     await _save('rug', const Size(660, 150), (c) => _rug(c, const Size(660, 150)));
@@ -189,13 +224,13 @@ void main() {
     await _save('preview_small', const Size(480, 480), (c) {
       _paper(c, const Size(480, 480), wide: false);
       c.translate(52, 110);
-      _stage(c, 2.5, poses['idle']!);
+      _stage(c, 2.5, _previewPose);
     });
     await _save('preview_medium', const Size(960, 450), (c) {
       _paper(c, const Size(960, 450), wide: true);
       c.save();
       c.translate(40, 70);
-      _stage(c, 3.3, poses['idle']!);
+      _stage(c, 3.3, _previewPose);
       c.restore();
       c.translate(640, 250);
       FoodBowlPainter().paint(c, const Size(200, 124));
@@ -208,7 +243,7 @@ void main() {
       c.restore();
       c.save();
       c.translate(110, 220);
-      _stage(c, 4.4, poses['idle']!);
+      _stage(c, 4.4, _previewPose);
       c.restore();
       c.translate(80, 700);
       FoodBowlPainter().paint(c, const Size(200, 124));

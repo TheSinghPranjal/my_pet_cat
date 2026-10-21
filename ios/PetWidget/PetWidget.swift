@@ -1,3 +1,4 @@
+import AppIntents
 import SwiftUI
 import WidgetKit
 
@@ -21,44 +22,89 @@ private struct PetPayload {
   static let appGroup = "group.com.thelazybearClub.myPetCat"
   static let schemaVersion = 1
 
+  /// Set by MeowIntent when the kitten is tapped (widget-only, not from Dart).
+  static let meowKey = "meowRequestedAt"
+
   var pose = "idle"
   var lastInteraction: String?
+  var meowRequestedAt: Date?
 
   static func load() -> PetPayload {
-    guard let defaults = UserDefaults(suiteName: appGroup),
-          defaults.integer(forKey: "schemaVersion") <= schemaVersion
-    else { return PetPayload() }
+    guard let defaults = UserDefaults(suiteName: appGroup) else { return PetPayload() }
+    let meow = defaults.object(forKey: meowKey) as? Date
+    guard defaults.integer(forKey: "schemaVersion") <= schemaVersion
+    else { return PetPayload(meowRequestedAt: meow) }
     return PetPayload(
       pose: defaults.string(forKey: "pose") ?? "idle",
-      lastInteraction: defaults.string(forKey: "lastInteraction")
+      lastInteraction: defaults.string(forKey: "lastInteraction"),
+      meowRequestedAt: meow
     )
   }
+}
+
+// MARK: - Routine
+
+/// One beat of the kitten's routine: which pose image, where along the floor
+/// (0 = her spot, 1 = at her wool ball), which way she faces, whether she is
+/// saying "Meow!", and how long the beat lasts.
+///
+/// The same routine as the Android flip-book (tool/widget_assets/widget_routine.dart),
+/// at WidgetKit's pace: iOS shows timeline entries rather than running the
+/// widget, and animates the change between entries (iOS 17+), so walking
+/// beats slide her across while the rest swap pose.
+struct Beat {
+  let cat: String
+  var x: CGFloat = 0
+  var facing: CGFloat = 1
+  var meow = false
+  let seconds: Double
+}
+
+private enum Routine {
+  static let beats: [Beat] = [
+    Beat(cat: "idle", seconds: 20),
+    Beat(cat: "lick_2", seconds: 5),
+    Beat(cat: "lick_3", seconds: 4),
+    Beat(cat: "lick_2", seconds: 5),
+    Beat(cat: "blink", seconds: 4),
+    Beat(cat: "meow", meow: true, seconds: 10),
+    Beat(cat: "idle", seconds: 12),
+    Beat(cat: "walk_2", x: 1, seconds: 3),
+    Beat(cat: "tap", x: 1, seconds: 6),
+    Beat(cat: "happy", x: 1, seconds: 12),
+    Beat(cat: "walk_4", x: 0, facing: -1, seconds: 3),
+    Beat(cat: "tail", seconds: 16),
+  ]
+
+  static let meowBeat = beats.firstIndex { $0.meow }!
+  static let happyBeat = beats.firstIndex { $0.cat == "happy" }!
 }
 
 // MARK: - Timeline
 
 struct PetEntry: TimelineEntry {
   let date: Date
-  let pose: String
+  let beat: Beat
   let greeting: String
 }
 
-/// WidgetKit doesn't run the widget continuously, so the kitten "lives" through
-/// pre-rendered poses on a relaxed timeline. iOS decides exactly when each
-/// entry is shown.
+/// Lively for the first few minutes after each reload, then calmer (each
+/// beat held longer) so an hour of routine fits one timeline and the widget
+/// stays well inside WidgetKit's refresh budget.
 struct PetProvider: TimelineProvider {
-  private static let poses = [
-    "idle", "look_at_toy", "paw_reach", "paw_tap", "happy", "tail_up", "blink", "rest", "tail_down",
-  ]
   private static let defaultGreeting = "Come play with me!"
+  private static let livelySeconds: Double = 10 * 60
+  private static let timelineSeconds: Double = 60 * 60
+  private static let calmStretch: Double = 6
 
   func placeholder(in context: Context) -> PetEntry {
-    PetEntry(date: Date(), pose: "idle", greeting: Self.defaultGreeting)
+    PetEntry(date: Date(), beat: Routine.beats[0], greeting: Self.defaultGreeting)
   }
 
   func getSnapshot(in context: Context, completion: @escaping (PetEntry) -> Void) {
     let payload = PetPayload.load()
-    completion(PetEntry(date: Date(), pose: context.isPreview ? "idle" : payload.pose,
+    let start = context.isPreview ? 0 : Self.startBeat(payload)
+    completion(PetEntry(date: Date(), beat: Routine.beats[start],
                         greeting: payload.lastInteraction ?? Self.defaultGreeting))
   }
 
@@ -66,31 +112,93 @@ struct PetProvider: TimelineProvider {
     let payload = PetPayload.load()
     let greeting = payload.lastInteraction ?? Self.defaultGreeting
     let now = Date()
-    // About 6 hours of poses, 20 minutes apart, starting with the shared pose.
-    let entries = (0..<18).map { i in
-      PetEntry(
-        date: now.addingTimeInterval(Double(i) * 20 * 60),
-        pose: i == 0 ? payload.pose : Self.poses[i % Self.poses.count],
-        greeting: greeting
-      )
+    var entries: [PetEntry] = []
+    var index = Self.startBeat(payload)
+    var t: Double = 0
+    while t < Self.timelineSeconds {
+      let beat = Routine.beats[index]
+      entries.append(PetEntry(date: now.addingTimeInterval(t), beat: beat, greeting: greeting))
+      t += beat.seconds * (t < Self.livelySeconds ? 1 : Self.calmStretch)
+      index = (index + 1) % Routine.beats.count
     }
     completion(Timeline(entries: entries, policy: .atEnd))
+  }
+
+  /// Meow right away after a tap on the kitten, look happy after playing in
+  /// the app, otherwise start from the top.
+  private static func startBeat(_ payload: PetPayload) -> Int {
+    if let tapped = payload.meowRequestedAt, Date().timeIntervalSince(tapped) < 30 { return Routine.meowBeat }
+    return payload.pose == "happy" ? Routine.happyBeat : 0
+  }
+}
+
+// MARK: - Tap to meow (iOS 17+)
+
+@available(iOSApplicationExtension 17.0, *)
+struct MeowIntent: AppIntent {
+  static var title: LocalizedStringResource = "Say hi to Kitty"
+  static var description = IntentDescription("Makes the kitten on your Home Screen meow.")
+
+  func perform() async throws -> some IntentResult {
+    // WidgetKit reloads the timeline after the intent; the provider sees
+    // this and starts on the meow beat.
+    UserDefaults(suiteName: PetPayload.appGroup)?.set(Date(), forKey: PetPayload.meowKey)
+    return .result()
   }
 }
 
 // MARK: - Views
 
-private struct Kitten: View {
-  let pose: String
+/// The kitten's little stage: her wool ball at the right, the kitten placed
+/// along the floor, and her "Meow!" bubble. Sizes are shares of the width,
+/// matching the Android layout.
+private struct KittenStage: View {
+  let beat: Beat
 
   var body: some View {
-    Image("widget_kitten_\(pose)")
-      .resizable()
-      .interpolation(.high)
-      .scaledToFit()
-      .id(pose)
-      .transition(.opacity)
-      .accessibilityHidden(true)
+    GeometryReader { geo in
+      let w = geo.size.width
+      ZStack(alignment: .bottomLeading) {
+        Image("widget_wool_ball")
+          .resizable().interpolation(.high).scaledToFit()
+          .frame(width: w * 0.14)
+          .padding(.bottom, 4)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        Image("widget_cat_\(beat.cat)")
+          .resizable().interpolation(.high).scaledToFit()
+          .frame(width: w * 0.62)
+          .scaleEffect(x: beat.facing, y: 1)
+          .offset(x: w * 0.24 * beat.x)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+          .animation(.easeInOut(duration: 1.8), value: beat.x)
+        if beat.meow {
+          Image("widget_meow")
+            .resizable().interpolation(.high).scaledToFit()
+            .frame(width: w * 0.37)
+            .offset(x: w * (0.62 + 0.24 * beat.x))
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .transition(.scale(scale: 0.3, anchor: .bottomLeading).combined(with: .opacity))
+        }
+      }
+      .animation(.spring(response: 0.45, dampingFraction: 0.6), value: beat.meow)
+    }
+    .accessibilityHidden(true)
+  }
+}
+
+/// The stage, which on iOS 17+ is also a button: tap the kitten and she
+/// meows. The rest of the widget still opens the game.
+private struct Kitten: View {
+  let beat: Beat
+
+  var body: some View {
+    if #available(iOSApplicationExtension 17.0, *) {
+      Button(intent: MeowIntent()) { KittenStage(beat: beat) }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Make Kitty meow")
+    } else {
+      KittenStage(beat: beat)
+    }
   }
 }
 
@@ -156,7 +264,7 @@ struct PetWidgetView: View {
     switch family {
     case .systemMedium:
       HStack(spacing: 6) {
-        Kitten(pose: entry.pose).frame(maxWidth: .infinity)
+        Kitten(beat: entry.beat).frame(maxWidth: .infinity)
         VStack(spacing: 5) {
           Title(size: 17)
           Greeting(text: entry.greeting, size: 13, lines: 2)
@@ -171,7 +279,7 @@ struct PetWidgetView: View {
         Greeting(text: entry.greeting, size: 14, lines: 1)
         ZStack(alignment: .bottom) {
           Image("widget_rug").resizable().scaledToFit().padding(.horizontal, 6).accessibilityHidden(true)
-          Kitten(pose: entry.pose).padding(.horizontal, 12).padding(.bottom, 12)
+          Kitten(beat: entry.beat).padding(.horizontal, 12).padding(.bottom, 12)
           HStack {
             Image("widget_food_bowl").resizable().scaledToFit().frame(width: 56).accessibilityHidden(true)
             Spacer()
@@ -186,7 +294,7 @@ struct PetWidgetView: View {
     default:
       VStack(spacing: 2) {
         Title(size: 13)
-        Kitten(pose: entry.pose).frame(maxHeight: .infinity)
+        Kitten(beat: entry.beat).frame(maxHeight: .infinity)
         Text("Tap to play ▸")
           .font(.system(size: 10, weight: .semibold, design: .rounded))
           .foregroundColor(Pen.inkSoft)
