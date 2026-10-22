@@ -1,43 +1,33 @@
-import 'dart:math' as math;
-
 import 'package:flutter/widgets.dart';
 
 import '../../sketch/sketch.dart';
 import 'cat_anatomy.dart';
 
-/// Pepper: a black-and-brown tortoiseshell with one bent ear and amber
-/// eyes. Her patches are fixed blobs (same seeds every frame), clipped to
-/// the body and head.
+/// Pepper: a calico that is mostly white (about 60%), with big orange
+/// patches (about 30%), a few light-brown spots (about 10%) and amber eyes.
+/// Her patches are fixed blobs (same seeds every frame), clipped to the body
+/// and head.
 class TortieCatPainter extends CatAnatomy {
   TortieCatPainter({required super.frame, required super.facing});
 
-  static const _chestnut = Color(0xFF8E522B);
-  static const _caramel = Color(0xFFC47D3E);
-  static const _umber = Color(0xFF5C3826);
+  static const _orange = Color(0xFFEE9442);
+  static const _lightBrown = Color(0xFFC49A72);
 
   static const _coat = CatCoat(
-    fur: Color(0xFF332829),
-    farFur: Color(0xFF281F20),
-    line: Color(0xFF85736A),
-    faceLine: Color(0xFFAE9A8E),
-    mouthLine: Color(0xFFC4AFA2),
-    whisker: Color(0xFFB4A49A),
-    shade: Color(0xFFA48C80),
-    bodyShade: 0.5,
-    headShade: 0.45,
-    blush: 0.2,
-    tuft: Color(0xFF6A4630),
+    fur: Color(0xFFFFFBF4),
+    farFur: Color(0xFFF1EBE2),
+    line: Color(0xFF4A3B33),
+    shade: Color(0xFFB8A898),
   );
 
   /// Body patches: centre as fractions of the body box, size, tilt,
-  /// colour, seed. Pairs overlap so they read as irregular mottling.
+  /// colour, seed. Pairs overlap so they read as irregular patches.
   static const _bodyPatches = [
-    (0.3, 0.22, 20.0, 9.0, -0.3, _chestnut, 81),
-    (0.42, 0.3, 12.0, 8.0, 0.4, _chestnut, 82),
-    (0.7, 0.2, 14.0, 7.0, 0.2, _caramel, 83),
-    (0.86, 0.6, 9.0, 14.0, 0.1, _caramel, 84),
-    (0.5, 0.78, 18.0, 7.0, 0.0, _umber, 85),
-    (0.14, 0.6, 9.0, 10.0, -0.5, _chestnut, 86),
+    (0.3, 0.22, 22.0, 12.0, -0.3, _orange, 81),
+    (0.44, 0.3, 14.0, 9.0, 0.4, _orange, 82),
+    (0.8, 0.3, 16.0, 12.0, 0.2, _orange, 83),
+    (0.62, 0.62, 7.0, 5.0, 0.1, _lightBrown, 84),
+    (0.16, 0.6, 8.0, 6.0, -0.5, _lightBrown, 85),
   ];
 
   @override
@@ -46,9 +36,6 @@ class TortieCatPainter extends CatAnatomy {
   @override
   CatEyes get eyes => const CatEyes(iris: Color(0xFFE3922A), glow: Color(0xFFF8D06E));
 
-  @override
-  EarStyle get earStyle => EarStyle.bent;
-
   void _blob(SketchPen pen, Offset c, double w, double h, Color color, int seed, {double tilt = 0}) {
     final oval = ovalPath(
       Offset.zero,
@@ -56,19 +43,15 @@ class TortieCatPainter extends CatAnatomy {
       h,
     ).transform((Matrix4.translationValues(c.dx, c.dy, 0)..rotateZ(tilt)).storage);
     final blob = pen.wobbly(oval, amplitude: 1.6, seed: seed);
-    pen.fill(blob, color.withValues(alpha: 0.9));
-    pen.hatch(blob, _umber.withValues(alpha: 0.45), spacing: 1.1, angle: -0.9, width: 0.35, seed: seed);
-  }
-
-  /// Short caramel pencil flecks scattered over [area] (fixed seed).
-  void _flecks(SketchPen pen, Rect area, int count, int seed) {
-    final rnd = math.Random(seed);
-    for (var i = 0; i < count; i++) {
-      final p = Offset(area.left + area.width * rnd.nextDouble(), area.top + area.height * rnd.nextDouble());
-      final a = -0.9 + rnd.nextDouble() * 0.5;
-      final len = 1.2 + rnd.nextDouble() * 1.6;
-      pen.line(p, p + Offset(math.cos(a), math.sin(a)) * len, _caramel, width: 0.7, sketchy: false, wobble: 0);
-    }
+    pen.fill(blob, color.withValues(alpha: 0.92));
+    pen.hatch(
+      blob,
+      const Color(0xFFB8641E).withValues(alpha: 0.35),
+      spacing: 1.1,
+      angle: -0.9,
+      width: 0.35,
+      seed: seed,
+    );
   }
 
   @override
@@ -76,21 +59,19 @@ class TortieCatPainter extends CatAnatomy {
     for (final (fx, fy, w, h, tilt, color, seed) in _bodyPatches) {
       _blob(pen, Offset(body.left + body.width * fx, body.top + body.height * fy), w, h, color, seed, tilt: tilt);
     }
-    _flecks(pen, body, 26, 89);
   }
 
   @override
   void paintHeadInside(SketchPen pen, Offset hc) {
-    // The classic split face: caramel over one eye, chestnut on the other cheek.
-    _blob(pen, hc + const Offset(-10, -6), 16, 14, _caramel, 86, tilt: 0.3);
-    _blob(pen, hc + const Offset(15, 4), 9, 12, _chestnut, 87, tilt: -0.2);
-    _blob(pen, hc + const Offset(3, -15), 9, 5, _chestnut, 88);
-    _flecks(pen, Rect.fromCenter(center: hc + const Offset(4, -6), width: 30, height: 14), 10, 90);
+    // The classic calico face: orange over one eye, a light-brown spot on
+    // the other side of the crown, white muzzle.
+    _blob(pen, hc + const Offset(-11, -9), 17, 13, _orange, 86, tilt: 0.3);
+    _blob(pen, hc + const Offset(12, -13), 9, 6, _lightBrown, 87, tilt: -0.2);
   }
 
   @override
   void paintTailMarks(SketchPen pen, Path tail) {
-    // Brindled: short caramel and chestnut dashes along the tail.
+    // Orange rings along the tail, with the odd light-brown one.
     final metric = tail.computeMetrics().first;
     for (var i = 0; i < 14; i++) {
       final t = metric.getTangentForOffset(metric.length * (0.18 + i * 0.058))!;
@@ -99,7 +80,7 @@ class TortieCatPainter extends CatAnatomy {
       pen.line(
         t.position + n - along,
         t.position + n + along,
-        i % 3 == 0 ? _chestnut : _caramel,
+        i % 4 == 3 ? _lightBrown : _orange,
         width: 1.3,
         sketchy: false,
         wobble: 0,
@@ -109,7 +90,8 @@ class TortieCatPainter extends CatAnatomy {
 
   @override
   void paintLegMarks(SketchPen pen, int i, Offset hip, Offset foot, {required bool far}) {
-    if (far || i != 3) return;
-    pen.fill(ovalPath(Offset.lerp(hip, foot, 0.45)!, 5.2, 6), _caramel);
+    if (far || i != 0) return;
+    // One orange patch high on a front leg.
+    pen.fill(ovalPath(Offset.lerp(hip, foot, 0.3)!, 5.2, 6), _orange);
   }
 }
