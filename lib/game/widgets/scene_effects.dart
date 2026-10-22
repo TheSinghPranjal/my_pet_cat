@@ -55,6 +55,12 @@ class SceneEffectsPainter extends CustomPainter {
           _zap(pen, e);
         case EffectKind.feathers:
           _feathers(pen, e);
+        case EffectKind.purr:
+          _purr(pen, e);
+        case EffectKind.quack:
+          _quack(pen, e);
+        case EffectKind.leafBurst:
+          _leafBurst(pen, e);
       }
       canvas.restore();
     }
@@ -104,6 +110,55 @@ class SceneEffectsPainter extends CustomPainter {
       pen.fill(feather, _a(SketchColors.white, alpha));
       pen.stroke(feather, _a(SketchColors.graphite, alpha), width: 0.35, sketchy: false, wobble: 0);
       pen.line(const Offset(0, -2), const Offset(0, 2.6), _a(SketchColors.graphite, alpha), width: 0.3, sketchy: false);
+      canvas.restore();
+    }
+  }
+
+  /// Soft "purr" squiggles rising and fading.
+  void _purr(SketchPen pen, SceneEffect e) {
+    for (var i = 0; i < 3; i++) {
+      final ph = (e.time / 1.6 + i / 3) % 1;
+      final o = Offset(-8 + i * 7, -ph * 14);
+      final wave = Path()..moveTo(o.dx - 4, o.dy);
+      for (var j = 0; j < 4; j++) {
+        wave.quadraticBezierTo(o.dx - 3 + j * 2, o.dy + (j.isEven ? -1.4 : 1.4), o.dx - 2 + j * 2, o.dy);
+      }
+      pen.stroke(wave, _a(SketchColors.pinkDeep, e.fade * (1 - ph)), width: 0.8, sketchy: false, wobble: 0);
+    }
+  }
+
+  /// A loud "quack": sound arcs bursting from the duck's beak.
+  void _quack(SketchPen pen, SceneEffect e) {
+    final t = (e.time / (e.duration ?? 1.0)).clamp(0.0, 1.0);
+    for (var i = 0; i < 3; i++) {
+      final r = 3 + i * 3 + t * 4;
+      final alpha = e.fade * (1 - t) * (1 - i * 0.2);
+      pen.stroke(Path()..addArc(Rect.fromCircle(center: Offset.zero, radius: r), -2.4, 1.6),
+          _a(SketchColors.sunEdge, alpha), width: 1.0, sketchy: false, wobble: 0);
+    }
+    pen.popMarks(const Offset(-6, -6), 5, t, _a(SketchColors.ink, e.fade), width: 0.7);
+  }
+
+  /// Autumn leaves bursting up out of a pile and floating down.
+  void _leafBurst(SketchPen pen, SceneEffect e) {
+    const colors = [SketchColors.coral, SketchColors.sunEdge, SketchColors.wool, SketchColors.kibble];
+    for (var i = 0; i < 10; i++) {
+      final up = math.min(e.time / 0.45, 1.0);
+      final fall = math.max(0.0, e.time - 0.45);
+      final spread = (i - 4.5) * 2.6;
+      final c = Offset(spread * up + math.sin(fall * 3 + i) * 3, -(14 + (i % 3) * 4) * up + fall * 7);
+      final canvas = pen.canvas;
+      canvas.save();
+      canvas.translate(c.dx, c.dy);
+      canvas.rotate(i + fall * 2.5);
+      final leaf = Path()
+        ..moveTo(-2.2, 0)
+        ..quadraticBezierTo(0, -1.8, 2.2, 0)
+        ..quadraticBezierTo(0, 1.8, -2.2, 0)
+        ..close();
+      final alpha = e.fade * (1 - (fall / 2.2).clamp(0.0, 1.0));
+      pen.fill(leaf, _a(colors[i % colors.length], alpha * 0.85));
+      pen.stroke(leaf, _a(SketchColors.kibbleDark, alpha), width: 0.35, sketchy: false, wobble: 0);
       canvas.restore();
     }
   }

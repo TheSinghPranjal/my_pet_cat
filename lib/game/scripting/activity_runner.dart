@@ -191,10 +191,11 @@ class ActivityRunner {
       case Focus(:final id):
         scene.focus = id == null ? null : _prop(id);
         return true;
-      case SetProp(:final id, :final fill, :final airborne):
+      case SetProp(:final id, :final fill, :final airborne, :final progress):
         final object = _prop(id);
         if (fill != null) object.fill = fill;
         if (airborne != null) object.airborne = airborne;
+        if (progress != null) object.progress = progress;
         return true;
       case MoveProp():
         return _moveProp(step);

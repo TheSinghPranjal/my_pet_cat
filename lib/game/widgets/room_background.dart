@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/widgets.dart';
 
 import '../models/game_positions.dart';
@@ -8,7 +6,7 @@ import 'scene_background.dart';
 
 /// The Home living room.
 class HomeRoomPainter extends SceneBackgroundPainter {
-  HomeRoomPainter(super.unit);
+  HomeRoomPainter(super.unit, {super.phase});
 
   @override
   void paintScene(Canvas canvas, SketchPen pen, double w, double h) {
@@ -106,31 +104,7 @@ class HomeRoomPainter extends SceneBackgroundPainter {
   void _window(SketchPen pen) {
     const frame = Rect.fromLTRB(5.5, 3.5, 34.5, 42);
     pen.fill(Path()..addRect(frame), SketchColors.white);
-    pen.hatch(Path()..addRect(frame.deflate(1.3)), SketchColors.inkWash.withValues(alpha: 0.5),
-        spacing: 3.2, angle: -0.7, seed: 11);
-
-    // Sun.
-    const sun = Offset(19.5, 10.5);
-    for (var i = 0; i < 10; i++) {
-      final a = i / 10 * math.pi * 2;
-      final d = Offset(math.cos(a), math.sin(a));
-      pen.line(sun + d * 5, sun + d * 7.4, SketchColors.sunEdge, width: 0.7, sketchy: false);
-    }
-    final sunDisc = ovalPath(sun, 7.2, 7.2);
-    pen.fill(sunDisc, SketchColors.sun);
-    pen.hatch(sunDisc, SketchColors.sunEdge, spacing: 0.9, cross: true, seed: 12);
-    pen.stroke(sunDisc, SketchColors.sunEdge, width: 0.7, seed: 12);
-
-    // Cloud.
-    final cloud = Path()
-      ..moveTo(8, 21.5)
-      ..quadraticBezierTo(6, 18, 9.8, 17.6)
-      ..quadraticBezierTo(10.8, 14, 14.6, 15.4)
-      ..quadraticBezierTo(17.8, 14.2, 18.4, 18)
-      ..quadraticBezierTo(21.6, 18.6, 19.8, 21.5)
-      ..close();
-    pen.fill(cloud, SketchColors.white);
-    pen.stroke(cloud, SketchColors.ink, width: 0.75, seed: 13);
+    windowSky(pen, frame.deflate(1.3), seed: 11);
 
     // Bushes outside.
     for (final bush in [

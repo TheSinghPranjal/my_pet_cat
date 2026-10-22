@@ -6,8 +6,8 @@ import '../../models/game_positions.dart';
 import '../../models/game_timings.dart';
 import '../../scripting/script_step.dart';
 
-/// The 1.x Outdoors activities (the park's first three things).
-abstract final class ParkScripts {
+/// The Outdoors garden: catch a bird, climb the tree, chase butterflies.
+abstract final class OutdoorScripts {
   static final catchBird = ActivityScript(
     firstPhase: CatGameState.catchingBird,
     needs: const {Need.fun: 18, Need.energy: -8},

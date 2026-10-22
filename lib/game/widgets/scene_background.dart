@@ -3,10 +3,14 @@ import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 
 import '../environments/bedroom/bedroom_background.dart';
+import '../environments/living_room/living_room_background.dart';
+import '../environments/park/park_background.dart';
+import '../models/day_phase.dart';
 import '../models/game_location.dart';
 import '../models/game_positions.dart';
 import '../sketch/sketch.dart';
 import 'bath_background.dart';
+import 'day_sky.dart';
 import 'kitchen_background.dart';
 import 'garden_background.dart';
 import 'room_background.dart';
@@ -58,22 +62,25 @@ class _GraphPaperPainter extends CustomPainter {
   bool shouldRepaint(_GraphPaperPainter oldDelegate) => oldDelegate.spacing != spacing;
 }
 
-/// The static artwork for a location. Painted once per layout and cached
-/// behind a [RepaintBoundary]; it never animates.
+/// The static artwork for a location at a time of day. Painted once per
+/// layout (and per [DayPhase]) and cached behind a [RepaintBoundary].
 class GameBackground extends StatelessWidget {
-  const GameBackground({super.key, required this.location, required this.unit});
+  const GameBackground({super.key, required this.location, required this.unit, this.phase = DayPhase.morning});
 
   final GameLocation location;
   final double unit;
+  final DayPhase phase;
 
   @override
   Widget build(BuildContext context) {
     final painter = switch (location) {
-      GameLocation.home => HomeRoomPainter(unit),
-      GameLocation.kitchen => KitchenPainter(unit),
-      GameLocation.bath => BathroomPainter(unit),
-      GameLocation.outdoors => GardenPainter(unit),
-      GameLocation.bedroom => BedroomPainter(unit),
+      GameLocation.home => HomeRoomPainter(unit, phase: phase),
+      GameLocation.kitchen => KitchenPainter(unit, phase: phase),
+      GameLocation.bath => BathroomPainter(unit, phase: phase),
+      GameLocation.outdoors => GardenPainter(unit, phase: phase),
+      GameLocation.bedroom => BedroomPainter(unit, phase: phase),
+      GameLocation.livingRoom => LivingRoomPainter(unit, phase: phase),
+      GameLocation.park => ParkPainter(unit, phase: phase),
     };
     return RepaintBoundary(
       child: CustomPaint(painter: painter, isComplex: true, child: const SizedBox.expand()),
@@ -85,9 +92,15 @@ class GameBackground extends StatelessWidget {
 /// units wide; pieces are anchored at normalized positions and sized in
 /// units, so they keep their shape on any aspect ratio.
 abstract class SceneBackgroundPainter extends CustomPainter {
-  SceneBackgroundPainter(this.unit);
+  SceneBackgroundPainter(this.unit, {this.phase = DayPhase.morning});
 
   final double unit;
+
+  /// The time of day the scene is drawn for.
+  final DayPhase phase;
+
+  /// Outdoor scenes have an open sky and take a lighter night wash.
+  bool get outdoors => false;
 
   /// [w] and [h] are the stage size in units.
   void paintScene(Canvas canvas, SketchPen pen, double w, double h);
@@ -100,7 +113,13 @@ abstract class SceneBackgroundPainter extends CustomPainter {
     canvas.scale(k);
     paintScene(canvas, pen, size.width / k, size.height / k);
     canvas.restore();
+    // The light of the time of day over everything.
+    final (color, alpha) = DaySky.wash(phase, outdoors: outdoors);
+    canvas.drawRect(Offset.zero & size, Paint()..color = color.withValues(alpha: alpha));
   }
+
+  /// What this scene's window shows right now.
+  void windowSky(SketchPen pen, Rect glass, {int seed = 0}) => DaySky.window(pen, glass, phase, seed: seed);
 
   static void place(Canvas canvas, Offset at, void Function() draw) {
     canvas.save();
@@ -210,5 +229,5 @@ abstract class SceneBackgroundPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(SceneBackgroundPainter oldDelegate) =>
-      oldDelegate.runtimeType != runtimeType || oldDelegate.unit != unit;
+      oldDelegate.runtimeType != runtimeType || oldDelegate.unit != unit || oldDelegate.phase != phase;
 }

@@ -34,16 +34,17 @@ void main() {
   });
 
   test('environments unlock at their thresholds', () {
+    const open = {
+      EnvironmentId.livingArea,
+      EnvironmentId.kitchen,
+      EnvironmentId.bathroom,
+      EnvironmentId.garden,
+      EnvironmentId.livingRoom,
+    };
     final expected = <int, Set<EnvironmentId>>{
-      0: {EnvironmentId.livingArea, EnvironmentId.kitchen, EnvironmentId.bathroom},
-      1: {EnvironmentId.livingArea, EnvironmentId.kitchen, EnvironmentId.bathroom, EnvironmentId.bedroom},
-      2: {
-        EnvironmentId.livingArea,
-        EnvironmentId.kitchen,
-        EnvironmentId.bathroom,
-        EnvironmentId.bedroom,
-        EnvironmentId.park,
-      },
+      0: open,
+      1: {...open, EnvironmentId.bedroom},
+      2: {...open, EnvironmentId.bedroom, EnvironmentId.park},
       4: {...EnvironmentId.values}..remove(EnvironmentId.car),
       6: {...EnvironmentId.values},
     };

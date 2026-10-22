@@ -49,6 +49,12 @@ class PetWidgetPayload {
         CatActivity.wardrobeHide => 'Peekaboo! You found me!',
         CatActivity.chewCable => "Zzzap! Cables aren't snacks!",
         CatActivity.pillowJump => 'Best. Pillow. Ever.',
+        CatActivity.fishBowl => 'That fish was too quick!',
+        CatActivity.purr => 'Purrrr... love you!',
+        CatActivity.windowWatch => 'Eek, a bird! ...okay now.',
+        CatActivity.duckPond => 'Quack! So loud!',
+        CatActivity.leafPile => 'Whee! Leaves everywhere!',
+        CatActivity.benchPigeon => 'The pigeon waved bye!',
       };
 
   Map<String, Object?> toMap() => {

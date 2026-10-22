@@ -232,6 +232,85 @@ abstract final class BedroomPositions {
   static const catBedJumpDown = Offset(0.70, 0.75);
 }
 
+abstract final class LivingRoomPositions {
+  static const idlePositionA = Offset(0.42, 0.715);
+  static const idlePositionB = Offset(0.52, 0.725);
+  static const idlePositionC = Offset(0.64, 0.715);
+  static const returnPosition = idlePositionB;
+
+  /// The big window on the left: its glass, and the sill the cat sits on.
+  static const windowGlass = Rect.fromLTRB(0.07, 0.17, 0.33, 0.455);
+  static const sillY = 0.476;
+
+  /// The long curtain right of the window, which the cat hides behind.
+  static const curtainLeft = 0.325;
+  static const curtainRight = 0.42;
+  static const curtainTop = 0.14;
+
+  /// The girl stands in the middle of the room.
+  static const girlPosition = Offset(0.60, 0.65);
+
+  /// The goldfish bowl on its little stool, by the sofa.
+  static const fishBowlPosition = Offset(0.86, 0.70);
+
+  // Fish bowl.
+  static const catAtBowl = Offset(0.745, 0.725);
+  static const bowlSplash = Offset(0.85, 0.63);
+
+  // Purr.
+  static const purrLeft = Offset(0.53, 0.70);
+  static const purrRight = Offset(0.67, 0.70);
+  static const purrMarks = Offset(0.60, 0.62);
+
+  // Window.
+  static const catBelowWindow = Offset(0.40, 0.72);
+  static const catOnSill = Offset(0.22, 0.476);
+  static const catJumpDown = Offset(0.42, 0.72);
+  static const catBehindCurtain = Offset(0.375, 0.642);
+  static const birdSpawn = Offset(1.08, 0.22);
+  static const birdNearWindow = Offset(0.44, 0.29);
+  static const birdAtCat = Offset(0.31, 0.38);
+  static const birdExit = Offset(1.12, 0.05);
+}
+
+abstract final class ParkPositions {
+  static const idlePositionA = Offset(0.32, 0.725);
+  static const idlePositionB = Offset(0.42, 0.73);
+  static const idlePositionC = Offset(0.52, 0.72);
+  static const returnPosition = idlePositionB;
+
+  /// The pond on the right (centre, and half-width / half-height).
+  static const pondCenter = Offset(0.80, 0.712);
+  static const pondRadius = Size(0.2, 0.045);
+
+  /// The bench at the back, and the leaf pile at the front left.
+  static const benchLeft = 0.24;
+  static const benchRight = 0.52;
+  static const benchSeatY = 0.585;
+  static const leafPilePosition = Offset(0.15, 0.768);
+  static const lampPosition = Offset(0.58, 0.632);
+
+  // Ducks.
+  static const catAtPond = Offset(0.56, 0.725);
+  static const catStartled = Offset(0.44, 0.73);
+  static const duckSpawn = Offset(1.06, 0.705);
+  static const duckNear = Offset(0.67, 0.708);
+  static const duckExit = Offset(1.08, 0.715);
+  static const quackAt = Offset(0.64, 0.66);
+
+  // Leaf pile.
+  static const catLeafRunStart = Offset(0.38, 0.73);
+  static const catInLeaves = Offset(0.16, 0.762);
+  static const catOutOfLeaves = Offset(0.28, 0.73);
+
+  // Pigeon on the bench.
+  static const pigeonOnBench = Offset(0.40, 0.585);
+  static const pigeonExit = Offset(-0.12, 0.08);
+  static const catSneakStart = Offset(0.56, 0.725);
+  static const catSneakEnd = Offset(0.46, 0.72);
+  static const catOnBench = Offset(0.36, 0.586);
+}
+
 /// Sprite sizes (widths) as fractions of [GameLayout.unit].
 abstract final class GameSizes {
   static const cat = 0.25;
@@ -250,6 +329,10 @@ abstract final class GameSizes {
   static const wardrobe = 0.27;
   static const pillow = 0.14;
   static const girl = 0.21;
+  static const fishBowl = 0.22;
+  static const duck = 0.11;
+  static const pigeon = 0.085;
+  static const leafPile = 0.22;
   static const actionButtonWidth = 0.29;
   static const actionButtonHeight = 0.14;
   static const navBarHeight = 0.145;

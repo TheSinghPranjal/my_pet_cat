@@ -125,7 +125,14 @@ class MousePainter extends CustomPainter {
 
 /// Tiny blue bird (100x90 box, facing right). Flaps while [airborne].
 class BirdPainter extends CustomPainter {
-  BirdPainter({this.phase = 0, this.airborne = false, this.facing = 1, this.appear = 1, this.pop = 0});
+  BirdPainter({
+    this.phase = 0,
+    this.airborne = false,
+    this.facing = 1,
+    this.appear = 1,
+    this.pop = 0,
+    this.pigeon = false,
+  });
 
   static const aspect = 100 / 90;
 
@@ -134,6 +141,15 @@ class BirdPainter extends CustomPainter {
   final double facing;
   final double appear;
   final double pop;
+
+  /// A soft grey park pigeon instead of a bluebird.
+  final bool pigeon;
+
+  Color get _tailColor => pigeon ? const Color(0xFF7D8090) : const Color(0xFF5E9BE0);
+  Color get _bodyColor => pigeon ? const Color(0xFFC3C6D2) : const Color(0xFF9CCBF5);
+  Color get _bellyColor => pigeon ? const Color(0xFFB9A3D8) : SketchColors.sun.withValues(alpha: 0.9);
+  Color get _bellyEdge => pigeon ? const Color(0xFF6FAF8E) : SketchColors.sunEdge;
+  Color get _wingColor => pigeon ? const Color(0xFF9EA2B0) : const Color(0xFF6FA8E8);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -160,18 +176,18 @@ class BirdPainter extends CustomPainter {
       }
     }
     final tail = polygon(const [Offset(24, 46), Offset(4, 38), Offset(6, 56), Offset(26, 58)]);
-    pen.fill(tail, const Color(0xFF5E9BE0));
+    pen.fill(tail, _tailColor);
     pen.hatch(tail, SketchColors.ink, spacing: 1.6, seed: 1);
     pen.stroke(tail, SketchColors.ink, width: 1.1, seed: 1);
 
     final body = ovalPath(const Offset(50, 52), 54, 50);
-    pen.fill(body, const Color(0xFF9CCBF5));
+    pen.fill(body, _bodyColor);
     canvas.save();
     canvas.clipPath(body);
     pen.hatch(body, SketchColors.ink.withValues(alpha: 0.45), spacing: 2.2, seed: 2);
     final belly = ovalPath(const Offset(58, 64), 32, 26);
-    pen.fill(belly, SketchColors.sun.withValues(alpha: 0.9));
-    pen.hatch(belly, SketchColors.sunEdge, spacing: 1.4, seed: 3);
+    pen.fill(belly, _bellyColor);
+    pen.hatch(belly, _bellyEdge, spacing: 1.4, seed: 3);
     canvas.restore();
     pen.stroke(body, SketchColors.ink, width: 1.3, seed: 4);
 
@@ -179,7 +195,7 @@ class BirdPainter extends CustomPainter {
     canvas.translate(44, 48);
     canvas.rotate(flap * 0.9);
     final wing = ovalPath(const Offset(-6, 4), 30, 17);
-    pen.fill(wing, const Color(0xFF6FA8E8));
+    pen.fill(wing, _wingColor);
     pen.hatch(wing, SketchColors.ink, spacing: 1.5, angle: 0.4, seed: 5);
     pen.stroke(wing, SketchColors.ink, width: 1.1, seed: 5);
     canvas.restore();
@@ -196,7 +212,12 @@ class BirdPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(BirdPainter old) =>
-      old.phase != phase || old.airborne != airborne || old.facing != facing || old.appear != appear || old.pop != pop;
+      old.phase != phase ||
+      old.airborne != airborne ||
+      old.facing != facing ||
+      old.appear != appear ||
+      old.pop != pop ||
+      old.pigeon != pigeon;
 }
 
 /// Pink-and-yellow butterfly (100x80 box). Always fluttering.

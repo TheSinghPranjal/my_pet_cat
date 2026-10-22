@@ -7,7 +7,7 @@ import 'scene_background.dart';
 /// The bathroom. The tub itself is a scene prop (see `BathTubPainter`) so the
 /// kitten can sit inside it.
 class BathroomPainter extends SceneBackgroundPainter {
-  BathroomPainter(super.unit);
+  BathroomPainter(super.unit, {super.phase});
 
   @override
   void paintScene(Canvas canvas, SketchPen pen, double w, double h) {
@@ -19,6 +19,7 @@ class BathroomPainter extends SceneBackgroundPainter {
     ground(pen, w, h, shade: SketchColors.inkSoft, line: SketchColors.ink, seed: 21);
     _floorTiles(pen, w, groundY, h * SceneMetrics.groundBottom);
 
+    place(0.10, 0.10, () => _window(pen));
     place(0.52, 0.11, () => _mirror(pen));
     place(0.52, 0.36, () => _basin(pen, groundY - h * 0.36));
     place(0.03, 0.30, () => _shelf(pen));
@@ -64,6 +65,26 @@ class BathroomPainter extends SceneBackgroundPainter {
       final y = top + (bottom - top) * f;
       pen.canvas.drawLine(Offset(0, y), Offset(w, y), paint);
     }
+  }
+
+  /// A small window with a round top, showing the time of day.
+  void _window(SketchPen pen) {
+    final frame = Path()
+      ..moveTo(0, 18)
+      ..lineTo(0, 7)
+      ..arcToPoint(const Offset(18, 7), radius: const Radius.circular(9))
+      ..lineTo(18, 18)
+      ..close();
+    pen.canvas.save();
+    pen.canvas.clipPath(frame);
+    windowSky(pen, const Rect.fromLTRB(0, -2, 18, 18), seed: 28);
+    pen.canvas.restore();
+    pen.stroke(frame, SketchColors.ink, width: 1.0, seed: 29);
+    pen.line(const Offset(9, -2), const Offset(9, 18), SketchColors.ink, width: 0.6);
+    pen.line(const Offset(0, 9.5), const Offset(18, 9.5), SketchColors.ink, width: 0.6);
+    final sill = rectPath(-1.5, 18, 19.5, 19.8);
+    pen.fill(sill, SketchColors.white);
+    pen.stroke(sill, SketchColors.ink, width: 0.7, seed: 30);
   }
 
   void _mirror(SketchPen pen) {

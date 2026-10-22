@@ -14,6 +14,12 @@ enum CatActivity {
   wardrobeHide,
   chewCable,
   pillowJump,
+  fishBowl,
+  purr,
+  windowWatch,
+  duckPond,
+  leafPile,
+  benchPigeon,
 }
 
 /// One contextual action button.

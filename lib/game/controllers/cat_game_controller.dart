@@ -13,6 +13,7 @@ import '../cats/reaction.dart';
 import '../environments/activity_scripts.dart';
 import '../models/activity_definition.dart';
 import '../models/cat_game_state.dart';
+import '../models/day_phase.dart';
 import '../models/game_location.dart';
 import '../models/game_positions.dart';
 import '../models/game_timings.dart';
@@ -35,7 +36,10 @@ class CatGameController extends ChangeNotifier {
     bool wanderEnabled = true,
     this.onNeeds,
     this.onCompleted,
+    DateTime Function() clock = DateTime.now,
   }) : _location = ValueNotifier(initialLocation),
+       _clock = clock,
+       _dayPhase = ValueNotifier(DayPhase.at(clock())),
        _persona = persona,
        _wanderEnabled = wanderEnabled {
     _scene = SceneState(locationConfig.startPosition);
@@ -60,6 +64,9 @@ class CatGameController extends ChangeNotifier {
   final ValueNotifier<GameLocation> _location;
   final _sceneOpacity = ValueNotifier<double>(1);
   final CatPersona _persona;
+  final DateTime Function() _clock;
+  final ValueNotifier<DayPhase> _dayPhase;
+  double _sinceClockCheck = 0;
 
   int _wanderIndex = 0;
   bool _wanderEnabled;
@@ -78,6 +85,9 @@ class CatGameController extends ChangeNotifier {
   ValueListenable<GameLocation> get locationListenable => _location;
   GameLocation get location => _location.value;
   LocationConfig get locationConfig => Locations.of(location);
+
+  /// The time of day, from the device clock; scenes are drawn for it.
+  ValueListenable<DayPhase> get dayPhase => _dayPhase;
 
   /// 0..1 opacity of the scene, dipped during location changes.
   ValueListenable<double> get sceneOpacity => _sceneOpacity;
@@ -183,6 +193,7 @@ class CatGameController extends ChangeNotifier {
       _ticker.stop();
     } else {
       _lastElapsed = Duration.zero;
+      _checkClock();
       _ticker.start();
     }
   }
@@ -254,7 +265,15 @@ class CatGameController extends ChangeNotifier {
     if (dt <= 0) return;
     _scene.advance(dt, GameTimings.stepRate);
     _runner.tick(dt);
+    _sinceClockCheck += dt;
+    if (_sinceClockCheck >= 5) _checkClock();
     notifyListeners();
+  }
+
+  /// Follows the device clock into the next part of the day.
+  void _checkClock() {
+    _sinceClockCheck = 0;
+    if (!_disposed) _dayPhase.value = DayPhase.at(_clock());
   }
 
   void _clearTransient() {
@@ -274,6 +293,7 @@ class CatGameController extends ChangeNotifier {
     _state.dispose();
     _location.dispose();
     _sceneOpacity.dispose();
+    _dayPhase.dispose();
     super.dispose();
   }
 }

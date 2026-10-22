@@ -73,7 +73,7 @@ enum CatPose {
   lookDown,
 }
 
-enum ObjectKind { bowl, yarn, mouse, bird, butterfly, brush, towel, glass, treat, fish, plate }
+enum ObjectKind { bowl, yarn, mouse, bird, butterfly, brush, towel, glass, treat, fish, plate, duck, pigeon }
 
 /// A temporary prop or critter in the scene.
 ///
@@ -130,6 +130,9 @@ enum EffectKind {
   timer,
   zap,
   feathers,
+  purr,
+  quack,
+  leafBurst,
 }
 
 /// A lightweight sketch effect anchored at a normalized position. Its look is

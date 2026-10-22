@@ -9,7 +9,7 @@ import 'scene_background.dart';
 /// The kitchen: window with café curtains, clock, shelf, utensils, a long
 /// counter over three cabinets, a stove with its pan, and the fridge.
 class KitchenPainter extends SceneBackgroundPainter {
-  KitchenPainter(super.unit);
+  KitchenPainter(super.unit, {super.phase});
 
   @override
   void paintScene(Canvas canvas, SketchPen pen, double w, double h) {
@@ -47,9 +47,7 @@ class KitchenPainter extends SceneBackgroundPainter {
   void _window(SketchPen pen) {
     const frame = Rect.fromLTRB(0, 0, 26, 30);
     pen.fill(Path()..addRect(frame), SketchColors.white);
-    pen.hatch(Path()..addRect(frame.deflate(1.2)), SketchColors.inkWash.withValues(alpha: 0.5), spacing: 3, seed: 1);
-    sun(pen, const Offset(18.5, 7.5), 3.2, 2);
-    cloud(pen, const Offset(3.5, 11), 0.65, 3);
+    windowSky(pen, frame.deflate(1.2), seed: 1);
     pen.stroke(Path()..addRect(frame), SketchColors.ink, width: 1.1, seed: 4);
     pen.stroke(rectPath(12.4, 0, 13.6, 30), SketchColors.ink, width: 0.6, seed: 5);
     pen.stroke(rectPath(0, 14.4, 26, 15.6), SketchColors.ink, width: 0.6, seed: 6);

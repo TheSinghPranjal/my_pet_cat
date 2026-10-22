@@ -33,6 +33,8 @@ abstract final class UnlockThresholds {
     EnvironmentId.park: UnlockRule(2),
     EnvironmentId.rooftop: UnlockRule(4),
     EnvironmentId.car: UnlockRule(6),
+    EnvironmentId.garden: UnlockRule.always,
+    EnvironmentId.livingRoom: UnlockRule.always,
   };
 
   static UnlockRule cat(CatId id) => cats[id]!;

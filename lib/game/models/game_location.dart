@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'activity_definition.dart';
 import 'game_positions.dart';
 
-enum GameLocation { home, kitchen, bath, outdoors, bedroom }
+enum GameLocation { home, kitchen, bath, outdoors, bedroom, livingRoom, park }
 
 /// Everything that differs between locations, as data.
 class LocationConfig {
@@ -139,11 +139,48 @@ abstract final class Locations {
     ],
   );
 
+  static const livingRoom = LocationConfig(
+    location: GameLocation.livingRoom,
+    title: 'Living',
+    greeting: 'Cozy time together!',
+    idlePositions: [
+      LivingRoomPositions.idlePositionA,
+      LivingRoomPositions.idlePositionB,
+      LivingRoomPositions.idlePositionC,
+    ],
+    walkArea: Rect.fromLTRB(0.38, 0.70, 0.68, 0.78),
+    activities: [
+      ActivityDefinition(CatActivity.fishBowl, 'Fish Bowl', 'Catch the fish', accent: 0xFFDDF0FB),
+      ActivityDefinition(CatActivity.purr, 'Purr', 'Purr for her', accent: 0xFFFBD9E6),
+      ActivityDefinition(CatActivity.windowWatch, 'Window', 'Look out the window', accent: 0xFFE2F2EA),
+    ],
+  );
+
+  static const park = LocationConfig(
+    location: GameLocation.park,
+    title: 'Park',
+    greeting: 'A day at the park!',
+    idlePositions: [
+      ParkPositions.idlePositionA,
+      ParkPositions.idlePositionB,
+      ParkPositions.idlePositionC,
+    ],
+    walkArea: Rect.fromLTRB(0.28, 0.70, 0.58, 0.78),
+    flourish: WanderStep.sniff(1.4),
+    activities: [
+      ActivityDefinition(CatActivity.duckPond, 'Ducks', 'Watch the ducks', accent: 0xFFDDF0FB),
+      ActivityDefinition(CatActivity.leafPile, 'Leaves', 'Jump in the leaves', accent: 0xFFFDE6C8),
+      ActivityDefinition(CatActivity.benchPigeon, 'Pigeon', 'Sneak up on the pigeon', accent: 0xFFE8E6F2),
+    ],
+  );
+
   static LocationConfig of(GameLocation location) => switch (location) {
         GameLocation.home => home,
         GameLocation.kitchen => kitchen,
         GameLocation.bath => bath,
         GameLocation.outdoors => outdoors,
         GameLocation.bedroom => bedroom,
+        GameLocation.livingRoom => livingRoom,
+        GameLocation.park => park,
       };
 }

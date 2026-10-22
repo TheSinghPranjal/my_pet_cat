@@ -210,11 +210,14 @@ class Focus extends ScriptStep {
 
 /// Changes a prop's flags at once.
 class SetProp extends ScriptStep {
-  const SetProp(this.id, {this.fill, this.airborne});
+  const SetProp(this.id, {this.fill, this.airborne, this.progress});
 
   final String id;
   final double? fill;
   final bool? airborne;
+
+  /// Generic 0..1 state (cooked, mid-quack...).
+  final double? progress;
 }
 
 /// Moves a prop along a straight segment, optionally hopping ([arc]) or

@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../animations/object_animations.dart';
 import '../models/cat_game_state.dart';
 import '../models/game_positions.dart';
+import '../environments/park/park_props.dart';
 import 'critters.dart';
 import 'food_bowl.dart';
 import 'grooming_props.dart';
@@ -36,6 +37,8 @@ class InteractiveObject extends StatelessWidget {
       ObjectKind.treat => box(GameSizes.treat, TreatPainter.aspect),
       ObjectKind.fish => box(GameSizes.fish, FishPainter.aspect),
       ObjectKind.plate => box(GameSizes.plate, PlatePainter.aspect),
+      ObjectKind.duck => box(GameSizes.duck, DuckPainter.aspect),
+      ObjectKind.pigeon => box(GameSizes.pigeon, BirdPainter.aspect),
     };
   }
 
@@ -59,6 +62,10 @@ class InteractiveObject extends StatelessWidget {
       ObjectKind.treat => TreatPainter(fill: o.fill, appear: o.appear, pop: o.pop),
       ObjectKind.fish => FishPainter(progress: o.progress, appear: o.appear, pop: o.pop),
       ObjectKind.plate => PlatePainter(fill: o.fill, appear: o.appear, pop: o.pop),
+      ObjectKind.duck => DuckPainter(
+          phase: o.phase, facing: o.facing, appear: o.appear, pop: o.pop, quacking: o.progress > 0),
+      ObjectKind.pigeon => BirdPainter(
+          phase: o.phase, airborne: o.airborne, facing: o.facing, appear: o.appear, pop: o.pop, pigeon: true),
     };
     return Opacity(
       opacity: ObjectAnimations.popOpacity(o.pop),

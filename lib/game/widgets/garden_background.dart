@@ -4,32 +4,22 @@ import 'package:flutter/widgets.dart';
 
 import '../models/game_positions.dart';
 import '../sketch/sketch.dart';
+import 'day_sky.dart';
 import 'scene_background.dart';
 
 /// The garden: notebook-paper sky, fence, grass, a bush and a climbable tree.
 class GardenPainter extends SceneBackgroundPainter {
-  GardenPainter(super.unit);
+  GardenPainter(super.unit, {super.phase});
+
+  @override
+  bool get outdoors => true;
 
   @override
   void paintScene(Canvas canvas, SketchPen pen, double w, double h) {
     Offset at(double x, double y) => Offset(x * w, y * h);
     final groundY = h * SceneMetrics.groundLine;
 
-    cloud(pen, at(0.34, 0.135), 1.3, 60);
-    cloud(pen, at(0.55, 0.19), 1.0, 61);
-    sun(pen, at(0.72, 0.12), 4.5, 62);
-    for (final (x, y, s) in const [(0.50, 0.17, 1.0), (0.56, 0.155, 0.8), (0.88, 0.23, 0.9)]) {
-      final o = at(x, y);
-      pen.stroke(
-        Path()
-          ..moveTo(o.dx - 2.2 * s, o.dy - 0.8 * s)
-          ..quadraticBezierTo(o.dx - 1 * s, o.dy - 1.6 * s, o.dx, o.dy)
-          ..quadraticBezierTo(o.dx + 1 * s, o.dy - 1.6 * s, o.dx + 2.2 * s, o.dy - 0.8 * s),
-        SketchColors.pencil,
-        width: 0.5,
-        sketchy: false,
-      );
-    }
+    DaySky.open(pen, w, groundY, phase);
 
     _fence(pen, w, groundY);
     ground(pen, w, h, shade: SketchColors.leaf, line: SketchColors.leafDark, seed: 31);

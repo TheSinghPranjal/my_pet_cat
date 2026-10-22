@@ -6,7 +6,7 @@ import '../../sketch/sketch.dart';
 
 /// How the girl feels; drives her face, arms and the little doodles around
 /// her head.
-enum GirlMood { happy, searching, laughing, furious, surprised }
+enum GirlMood { happy, searching, laughing, furious, surprised, adoring }
 
 /// Standing still, walking or running.
 enum GirlGait { stand, walk, run }
@@ -243,6 +243,8 @@ class GirlPainter extends CustomPainter {
         (const Offset(13, 66), const Offset(15, 52)),
         (const Offset(47, 66), const Offset(45, 52)),
       ),
+      // Hands clasped at her chest.
+      GirlMood.adoring => ((const Offset(17, 72), const Offset(28, 68)), (const Offset(43, 72), const Offset(32, 68))),
       GirlMood.happy => ((const Offset(17, 77), const Offset(12, 91)), (const Offset(43, 77), const Offset(48, 91))),
     };
   }
@@ -371,7 +373,7 @@ class GirlPainter extends CustomPainter {
     final blink = mood == GirlMood.happy && (time % 3.7) < 0.12;
     for (final side in const [-1.0, 1.0]) {
       final e = Offset(cx + 6.6 * side, 35.5);
-      if (mood == GirlMood.laughing || blink) {
+      if (mood == GirlMood.laughing || mood == GirlMood.adoring || blink) {
         // Squeezed shut with joy (or a quick blink).
         pen.stroke(
           Path()
@@ -419,7 +421,7 @@ class GirlPainter extends CustomPainter {
   void _mouth(SketchPen pen, double cx) {
     final m = Offset(cx, 46);
     switch (mood) {
-      case GirlMood.happy || GirlMood.laughing:
+      case GirlMood.happy || GirlMood.laughing || GirlMood.adoring:
         final wide = mood == GirlMood.laughing ? 5.2 : 3.6;
         final deep = mood == GirlMood.laughing ? 5.2 : 3.6;
         final mouth = Path()
@@ -485,9 +487,24 @@ class GirlPainter extends CustomPainter {
         ]) {
           pen.line(a, b, _ink, width: 1.0, sketchy: false);
         }
+      case GirlMood.adoring:
+        for (var i = 0; i < 3; i++) {
+          final ph = (time * 0.7 + i / 3) % 1;
+          _heart(pen, Offset(42 + i * 5 + math.sin(ph * 6 + i) * 2, 18 - ph * 16), 1 - ph);
+        }
       case GirlMood.happy:
         break;
     }
+  }
+
+  void _heart(SketchPen pen, Offset c, double alpha) {
+    final heart = Path()
+      ..moveTo(c.dx, c.dy + 2.6)
+      ..cubicTo(c.dx - 3.6, c.dy, c.dx - 2, c.dy - 2.8, c.dx, c.dy - 1.1)
+      ..cubicTo(c.dx + 2, c.dy - 2.8, c.dx + 3.6, c.dy, c.dx, c.dy + 2.6)
+      ..close();
+    pen.fill(heart, SketchColors.pinkDeep.withValues(alpha: 0.85 * alpha));
+    pen.stroke(heart, SketchColors.pinkDeep.withValues(alpha: alpha), width: 0.6, sketchy: false, wobble: 0);
   }
 
   void _question(SketchPen pen, Offset at, double scale) {

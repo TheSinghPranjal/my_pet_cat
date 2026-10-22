@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 
 import '../environments/bedroom/bedroom_props.dart';
+import '../environments/living_room/living_room_props.dart';
+import '../environments/park/park_props.dart';
 import '../models/game_location.dart';
 import '../sketch/sketch.dart';
 import 'activity_icon.dart';
@@ -22,53 +24,91 @@ class LocationNavigation extends StatelessWidget {
   final bool enabled;
   final ValueChanged<GameLocation> onSelected;
 
+  /// Smallest comfortable touch target for one place.
+  static const minItemWidth = 48.0;
+
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
       painter: const SketchFramePainter(radius: 0.45, seed: 7),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 5, 12, 6),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            for (final location in GameLocation.values)
-              Expanded(
-                child: SketchPressable(
-                  enabled: enabled,
-                  selected: location == selected,
-                  semanticLabel: 'Go to ${Locations.of(location).title}',
-                  onPressed: () => onSelected(location),
-                  child: LayoutBuilder(
-                    builder: (context, box) => Column(
-                      children: [
-                        Expanded(
-                          child: CustomPaint(
-                            painter: _NavIconPainter(location, selected: location == selected),
-                            child: const SizedBox.expand(),
-                          ),
-                        ),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            Locations.of(location).title,
-                            style: TextStyle(
-                              color: location == selected ? SketchColors.ink : SketchColors.inkSoft,
-                              fontSize: box.maxHeight * 0.22,
-                              fontWeight: location == selected ? FontWeight.w800 : FontWeight.w600,
-                              height: 1.0,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-          ],
+        child: LayoutBuilder(
+          builder: (context, box) {
+            const places = GameLocation.values;
+            final itemWidth = math.max(minItemWidth, box.maxWidth / places.length);
+            final row = Row(
+              children: [
+                for (final location in places) SizedBox(width: itemWidth, child: _item(location)),
+              ],
+            );
+            // With many places on a narrow phone, the strip scrolls sideways.
+            if (itemWidth * places.length <= box.maxWidth + 0.5) return row;
+            return _ScrollingStrip(
+              initialOffset: math.max(0, (places.indexOf(selected) + 1) * itemWidth - box.maxWidth),
+              child: row,
+            );
+          },
         ),
       ),
     );
   }
+
+  Widget _item(GameLocation location) => SketchPressable(
+    enabled: enabled,
+    selected: location == selected,
+    semanticLabel: 'Go to ${Locations.of(location).title}',
+    onPressed: () => onSelected(location),
+    child: LayoutBuilder(
+      builder: (context, box) => Column(
+        children: [
+          Expanded(
+            child: CustomPaint(
+              painter: _NavIconPainter(location, selected: location == selected),
+              child: const SizedBox.expand(),
+            ),
+          ),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              Locations.of(location).title,
+              style: TextStyle(
+                color: location == selected ? SketchColors.ink : SketchColors.inkSoft,
+                fontSize: box.maxHeight * 0.22,
+                fontWeight: location == selected ? FontWeight.w800 : FontWeight.w600,
+                height: 1.0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// A sideways-scrolling strip that starts with the selected place in view.
+class _ScrollingStrip extends StatefulWidget {
+  const _ScrollingStrip({required this.initialOffset, required this.child});
+
+  final double initialOffset;
+  final Widget child;
+
+  @override
+  State<_ScrollingStrip> createState() => _ScrollingStripState();
+}
+
+class _ScrollingStripState extends State<_ScrollingStrip> {
+  late final _controller = ScrollController(initialScrollOffset: widget.initialOffset);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      SingleChildScrollView(scrollDirection: Axis.horizontal, controller: _controller, child: widget.child);
 }
 
 class _NavIconPainter extends CustomPainter {
@@ -121,6 +161,10 @@ class _NavIconPainter extends CustomPainter {
         TreeIconPainter(withSun: true).paint(canvas, const Size(30, 30));
       case GameLocation.bedroom:
         BedIconPainter(color: _ink).paint(canvas, const Size(40, 40));
+      case GameLocation.livingRoom:
+        SofaIconPainter(color: _ink).paint(canvas, const Size(40, 40));
+      case GameLocation.park:
+        ParkIconPainter(color: _ink).paint(canvas, const Size(40, 40));
     }
     canvas.restore();
     canvas.restore();

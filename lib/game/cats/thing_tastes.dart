@@ -26,6 +26,14 @@ abstract final class ThingTastes {
     'wardrobeHide': ThingTaste(Trait.curiosity),
     'chewCable': ThingTaste(Trait.tidiness, inverted: true),
     'pillowJump': ThingTaste(Trait.energy),
+    // Living room.
+    'fishBowl': ThingTaste(Trait.curiosity),
+    'purr': ThingTaste(Trait.cuddliness),
+    'windowWatch': ThingTaste(Trait.curiosity),
+    // Park.
+    'duckPond': ThingTaste(Trait.curiosity),
+    'leafPile': ThingTaste(Trait.energy),
+    'benchPigeon': ThingTaste(Trait.energy),
     // The universal favourite.
     'cardboardBox': ThingTaste.universal(),
   };

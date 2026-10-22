@@ -10,20 +10,13 @@ import '../../models/game_positions.dart';
 import '../../scripting/scene_state.dart';
 import '../../scripting/script_step.dart';
 import 'bedroom_keys.dart';
-import 'girl_painter.dart';
+import '../girl/girl_painter.dart';
+import '../girl/girl_steps.dart';
 
 /// The bedroom's three things: hide-and-seek in the wardrobe, a cheeky
 /// chew on the charger cable, and bouncing on the pillow. The girl who
 /// lives here joins in every one.
 abstract final class BedroomScripts {
-  static ScriptStep _mood(GirlMood mood) => SetValue(BedroomKeys.girlMood, BedroomKeys.mood(mood));
-  static ScriptStep _gait(GirlGait gait) => SetValue(BedroomKeys.girlGait, BedroomKeys.gait(gait));
-  static ScriptStep _face(double facing) => SetValue(BedroomKeys.girlFacing, facing);
-
-  /// The girl walks (or runs) to [x] (offset from her spot), facing that way.
-  static ScriptStep _girlTo(double x, double seconds, {required double facing, GirlGait gait = GirlGait.walk}) =>
-      Sequence([_face(facing), _gait(gait), TweenValue(BedroomKeys.girlX, x, seconds), _gait(GirlGait.stand)]);
-
   static ScriptStep _door(double to, double seconds) =>
       TweenValue(BedroomKeys.wardrobeDoor, to, seconds, curve: Curves.easeOut);
 
@@ -46,38 +39,38 @@ abstract final class BedroomScripts {
       const Wait(0.5),
 
       // Where's kitty? The girl looks by the bed, then back the other way.
-      _mood(GirlMood.searching),
-      _girlTo(BedroomPositions.girlAtBed, 1.4, facing: 1),
+      Girl.mood(GirlMood.searching),
+      Girl.to(BedroomPositions.girlAtBed, 1.4, facing: 1),
       const Wait(0.7),
-      _face(-1),
+      Girl.face(-1),
       const Wait(0.6),
-      _girlTo(0, 1.1, facing: -1),
-      _face(0),
+      Girl.to(0, 1.1, facing: -1),
+      Girl.face(0),
       const Wait(0.6),
 
       // Those eyes in the wardrobe! She tiptoes over and opens the door.
-      _face(-1),
+      Girl.face(-1),
       const Wait(0.5),
-      _girlTo(BedroomPositions.girlAtWardrobe, 0.7, facing: -1),
+      Girl.to(BedroomPositions.girlAtWardrobe, 0.7, facing: -1),
       _door(1, 0.35),
 
       // Boo! Out jumps the cat.
       const SetValue(BedroomKeys.wardrobeEyes, 0),
       const SetValue(SceneKeys.catHidden, 0),
-      _mood(GirlMood.surprised),
+      Girl.mood(GirlMood.surprised),
       const Pounce(BedroomPositions.catWardrobeJumpOut, height: 16, seconds: 0.55),
       const Turn(-1),
       const Effect(EffectKind.sparkles, Offset(0, -0.1), nearCat: true, duration: 1.2),
       Parallel([
         const Pose(CatPose.happy, 1.2),
-        Sequence([const Wait(0.3), _mood(GirlMood.laughing)]),
+        Sequence([const Wait(0.3), Girl.mood(GirlMood.laughing)]),
       ]),
 
       // Close up and back to normal.
       const Phase(CatGameState.returningToIdle),
-      _mood(GirlMood.happy),
-      Parallel([_door(0, 0.4), _girlTo(0, 0.7, facing: 1)]),
-      _face(0),
+      Girl.mood(GirlMood.happy),
+      Parallel([_door(0, 0.4), Girl.to(0, 0.7, facing: 1)]),
+      Girl.face(0),
       const WalkTo(BedroomPositions.returnPosition),
     ],
   );
@@ -104,7 +97,7 @@ abstract final class BedroomScripts {
           _hop(BedroomPositions.catChewPosition, height: 7),
           const Wait(0.54),
         ]),
-        Sequence([const Wait(0.4), _mood(GirlMood.laughing)]),
+        Sequence([const Wait(0.4), Girl.mood(GirlMood.laughing)]),
       ]),
       const SetValue(BedroomKeys.cableZap, 0),
 
@@ -112,7 +105,7 @@ abstract final class BedroomScripts {
       const Pose(CatPose.sit),
       const Mark(CatMark.question, 1.0),
       const Wait(0.6),
-      _mood(GirlMood.happy),
+      Girl.mood(GirlMood.happy),
       const Effect(EffectKind.sparkles, Offset(0, -0.1), nearCat: true, duration: 1.0),
       const Pose(CatPose.happy, 1.0),
 
@@ -146,33 +139,33 @@ abstract final class BedroomScripts {
 
       // The girl is NOT amused. She runs over; the cat skips away along
       // the bed, she runs back after it...
-      _mood(GirlMood.furious),
+      Girl.mood(GirlMood.furious),
       const Pose(CatPose.play, 0.5),
-      _girlTo(0.14, 0.8, facing: 1, gait: GirlGait.run),
+      Girl.to(0.14, 0.8, facing: 1, gait: GirlGait.run),
       const Mark(CatMark.exclaim, 0.3),
       const Turn(-1),
       Parallel([
         const Pounce(BedroomPositions.catOnBed, height: 10, seconds: 0.5),
-        Sequence([const Wait(0.2), _girlTo(0.06, 0.5, facing: -1, gait: GirlGait.run)]),
+        Sequence([const Wait(0.2), Girl.to(0.06, 0.5, facing: -1, gait: GirlGait.run)]),
       ]),
       const Turn(1),
       Parallel([
         const Pounce(BedroomPositions.catBedMiddle, height: 10, seconds: 0.45),
-        Sequence([const Wait(0.2), _girlTo(0.17, 0.6, facing: 1, gait: GirlGait.run)]),
+        Sequence([const Wait(0.2), Girl.to(0.17, 0.6, facing: 1, gait: GirlGait.run)]),
       ]),
 
       // ...until the cat comes down from the bed, all innocent.
       const Turn(-1),
       const Pounce(BedroomPositions.catBedJumpDown, height: 12, seconds: 0.55),
       const Pose(CatPose.innocent),
-      _face(-1),
+      Girl.face(-1),
       const Wait(1.0),
-      _mood(GirlMood.happy),
+      Girl.mood(GirlMood.happy),
       const Wait(0.6),
 
       const Phase(CatGameState.returningToIdle),
       Parallel([
-        Sequence([_girlTo(0, 0.8, facing: -1), _face(0)]),
+        Sequence([Girl.to(0, 0.8, facing: -1), Girl.face(0)]),
         const WalkTo(BedroomPositions.returnPosition),
       ]),
     ],

@@ -7,9 +7,12 @@ import '../navigation/app_launch_router.dart';
 import 'cats/selected_cat.dart';
 import 'controllers/cat_game_controller.dart';
 import 'environments/bedroom/bedroom_layer.dart';
+import 'environments/living_room/living_room_layer.dart';
+import 'environments/park/park_layer.dart';
 import 'environments/environment_id.dart';
 import 'models/activity_definition.dart';
 import 'models/cat_game_state.dart';
+import 'models/day_phase.dart';
 import 'models/game_location.dart';
 import 'models/game_positions.dart';
 import 'save/game_store.dart';
@@ -31,7 +34,10 @@ import 'widgets/wool_ball.dart';
 /// The whole game: paper, static scene, animated playfield, and controls,
 /// each on its own layer.
 class CatGameScreen extends StatefulWidget {
-  const CatGameScreen({super.key});
+  const CatGameScreen({super.key, this.clock});
+
+  /// The time source for the time of day; the device clock when null.
+  final DateTime Function()? clock;
 
   @override
   State<CatGameScreen> createState() => CatGameScreenState();
@@ -50,6 +56,7 @@ class CatGameScreenState extends State<CatGameScreen>
     final store = GameStore.instance;
     _controller = CatGameController(
       vsync: this,
+      clock: widget.clock ?? DateTime.now,
       persona: selectedCat.value.persona,
       wanderEnabled: store.save.settings.wander,
       onNeeds: (deltas) => store.applyNeeds(selectedCat.value.id, deltas),
@@ -186,7 +193,10 @@ class CatGameScreenState extends State<CatGameScreen>
                   right: inset + corner,
                   top: inset,
                   height: corner,
-                  child: _Greeting(text: config.greeting),
+                  child: ValueListenableBuilder<DayPhase>(
+                    valueListenable: _controller.dayPhase,
+                    builder: (context, phase, _) => _Greeting(text: config.greeting, night: phase == DayPhase.night),
+                  ),
                 ),
                 for (final (i, definition) in config.activities.indexed)
                   at(
@@ -246,9 +256,12 @@ class CatGameScreenState extends State<CatGameScreen>
 
 /// Small handwritten greeting at the top, secondary to the scene.
 class _Greeting extends StatelessWidget {
-  const _Greeting({required this.text});
+  const _Greeting({required this.text, this.night = false});
 
   final String text;
+
+  /// Moonlit lettering, so it reads against the night sky.
+  final bool night;
 
   @override
   Widget build(BuildContext context) {
@@ -259,7 +272,8 @@ class _Greeting extends StatelessWidget {
           child: Text(
             text,
             style: TextStyle(
-              color: SketchColors.ink,
+              color: night ? const Color(0xFFFFF0B3) : SketchColors.ink,
+              shadows: night ? const [Shadow(color: Color(0xCC131840), blurRadius: 4)] : null,
               fontSize: box.maxHeight * 0.34,
               fontWeight: FontWeight.w700,
               fontStyle: FontStyle.italic,
@@ -286,14 +300,30 @@ class _Scene extends StatelessWidget {
       child: Stack(
         children: [
           Positioned.fill(
-            child: ValueListenableBuilder<GameLocation>(
-              valueListenable: controller.locationListenable,
-              builder: (context, location, _) =>
-                  GameBackground(location: location, unit: layout.unit),
+            child: ListenableBuilder(
+              listenable: Listenable.merge([controller.locationListenable, controller.dayPhase]),
+              builder: (context, _) => GameBackground(
+                location: controller.location,
+                unit: layout.unit,
+                phase: controller.dayPhase.value,
+              ),
             ),
           ),
           Positioned.fill(
             child: IgnorePointer(child: _Playfield(controller: controller, layout: layout)),
+          ),
+          // Evening and night light falls on the cat and friends too.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ValueListenableBuilder<DayPhase>(
+                valueListenable: controller.dayPhase,
+                builder: (context, phase, _) => switch (phase) {
+                  DayPhase.evening => const ColoredBox(color: Color(0x10FF8E6E)),
+                  DayPhase.night => const ColoredBox(color: Color(0x2E131840)),
+                  _ => const SizedBox.shrink(),
+                },
+              ),
+            ),
           ),
         ],
       ),
@@ -342,7 +372,12 @@ class _Playfield extends StatelessWidget {
           ));
         }
 
-        if (controller.location == GameLocation.bedroom) items.addAll(bedroomItems(controller, layout, anchored));
+        items.addAll(switch (controller.location) {
+          GameLocation.bedroom => bedroomItems(controller, layout, anchored),
+          GameLocation.livingRoom => livingRoomItems(controller, layout, anchored),
+          GameLocation.park => parkItems(controller, layout, anchored),
+          _ => const <(double, Widget)>[],
+        });
 
         if (controller.location == GameLocation.home) {
           // Resting props belong to the room; the bowl and ball step aside

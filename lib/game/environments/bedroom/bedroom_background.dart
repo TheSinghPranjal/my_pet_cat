@@ -11,7 +11,7 @@ import '../../widgets/scene_background.dart';
 /// wardrobe, pillow, cable and the girl herself are animated props drawn on
 /// top.
 class BedroomPainter extends SceneBackgroundPainter {
-  BedroomPainter(super.unit);
+  BedroomPainter(super.unit, {super.phase});
 
   static const _lilac = Color(0xFFE6DCF7);
   static const _lilacDeep = Color(0xFF9C86D6);
@@ -50,12 +50,7 @@ class BedroomPainter extends SceneBackgroundPainter {
   void _window(SketchPen pen) {
     const width = 22.0, height = 30.0;
     final glass = rectPath(0, 0, width, height);
-    pen.fill(glass, SketchColors.inkWash.withValues(alpha: 0.45));
-    pen.canvas.save();
-    pen.canvas.clipPath(glass);
-    sun(pen, const Offset(16, 8), 3.6, 402);
-    cloud(pen, const Offset(2, 16), 0.9, 403);
-    pen.canvas.restore();
+    windowSky(pen, const Rect.fromLTRB(0, 0, width, height), seed: 402);
     pen.stroke(glass, SketchColors.ink, width: 1.0, seed: 404);
     pen.line(const Offset(width / 2, 0), const Offset(width / 2, height), SketchColors.ink, width: 0.7);
     pen.line(const Offset(0, height / 2), const Offset(width, height / 2), SketchColors.ink, width: 0.7);

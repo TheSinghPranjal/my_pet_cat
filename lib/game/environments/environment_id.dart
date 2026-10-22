@@ -2,13 +2,18 @@ import '../models/game_location.dart';
 
 /// The seven places of My Pet Cat 2.0. Saved by [name], so never rename.
 enum EnvironmentId {
+  /// The 1.x Home.
   livingArea,
   kitchen,
   bathroom,
   bedroom,
   park,
   rooftop,
-  car;
+  car,
+
+  /// The 1.x Outdoors garden.
+  garden,
+  livingRoom;
 
   /// The 1.x scene that becomes this place, until every place has its own
   /// environment config.
@@ -16,8 +21,10 @@ enum EnvironmentId {
     GameLocation.home => livingArea,
     GameLocation.kitchen => kitchen,
     GameLocation.bath => bathroom,
-    GameLocation.outdoors => park,
+    GameLocation.outdoors => garden,
     GameLocation.bedroom => bedroom,
+    GameLocation.livingRoom => livingRoom,
+    GameLocation.park => park,
   };
 
   static EnvironmentId? tryParse(Object? name) {
